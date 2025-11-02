@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Kairo</h1>
+        
+        <label for="prompt-input">Enter your prompt:</label>
+        <textarea id="prompt-input" rows="3">minimal techno</textarea>
+
+        <label for="bpm-input">BPM:</label>
+        <input type="number" id="bpm-input" value="90">
+
+        <label for="duration-input">Duration (seconds):</label>
+        <input type="number" id="duration-input" value="15">
+
+        <button id="generate-button">Generate & Play</button>
+
+        <div id="status-message">Ready</div>
+
+        <div id="audio-container"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
