@@ -1,67 +1,65 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+    
+    const promptInput = document.getElementById("prompt-input");
+    const generateButton = document.getElementById("generate-button");
+    const statusMessage = document.getElementById("status-message");
+    const audioContainer = document.getElementById("audio-container");
 
-    const generateButton = document.getElementById('generate-button');
-    const promptInput = document.getElementById('prompt-input');
-    const bpmInput = document.getElementById('bpm-input');
-    const durationInput = document.getElementById('duration-input');
-    const statusMessage = document.getElementById('status-message');
-    const audioContainer = document.getElementById('audio-container');
+    const BACKEND_URL = 'http://192.168.1.200:5001/generate-music'; 
 
-    const BACKEND_URL = 'http://192.168.1.200:5001/generate-music';
-
-    generateButton.addEventListener('click', async () => {
+    async function generateAndPlay() {
         
+        const promptText = promptInput.value;
 
-        if (generateButton.classList.contains('loading')) {
+        if (!promptText) {
+            statusMessage.textContent = "Please enter a prompt!";
             return;
         }
 
+        generateButton.disabled = true;
+        statusMessage.innerHTML = '<span class="loader"></span>Generating... This may take 20-30 seconds.';
+        audioContainer.innerHTML = ""; 
+
         try {
-            statusMessage.textContent = 'Generating... This may take a minute.';
-            generateButton.textContent = 'Generating...';
-            generateButton.classList.add('loading');
-            audioContainer.innerHTML = '';
-
-            const prompt = promptInput.value;
-            const bpm = parseInt(bpmInput.value);
-            const duration_sec = parseInt(durationInput.value);
-
             const response = await fetch(BACKEND_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    prompt: prompt,
-                    bpm: bpm,
-                    duration_sec: duration_sec
+                    prompt: promptText
                 }),
             });
 
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Server error');
+                const errorData = await response.json().catch(() => null);
+                if (errorData && errorData.error) {
+                    throw new Error(errorData.error);
+                }
+                throw new Error(`Server error (HTTP ${response.status})`);
             }
 
             const data = await response.json();
 
-            statusMessage.textContent = 'Audio generated! Playing...';
+            if (!data.audioBase64) {
+                throw new Error("Server response did not include audio data.");
+            }
 
-            const audioUri = `data:audio/wav;base64,${data.audioBase64}`;
-            
-            const audio = new Audio(audioUri);
-            audio.controls = true;
-            audio.autoplay = true;
+            statusMessage.textContent = "Playing generated music!";
+            const audioSrc = `data:audio/wav;base64,${data.audioBase64}`;
+            const audioPlayer = new Audio(audioSrc);
+            audioPlayer.controls = true; 
+            audioContainer.appendChild(audioPlayer);
+            audioPlayer.play();
 
-            audioContainer.appendChild(audio);
-
-        } catch (error) {
-            console.error('Generation failed:', error);
-            statusMessage.textContent = `Error: ${error.message}`;
+        } catch (err) {
+            console.error(err);
+            statusMessage.textContent = `Error: ${err.message}`;
         } finally {
-
-            generateButton.textContent = 'Generate & Play';
-            generateButton.classList.remove('loading');
+            generateButton.disabled = false;
         }
-    });
+    }
+
+    generateButton.addEventListener("click", generateAndPlay);
 });
+

@@ -2,87 +2,97 @@ import os
 import base64
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
-
 from google.cloud import aiplatform
 from google.protobuf import json_format
 from google.protobuf.struct_pb2 import Value
 
-load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
 GOOGLE_PROJECT_ID = "gen-lang-client-0362204679"
-GOOGLE_REGION = "us-central1"
-PUBLISHER = "google"
-MODEL_ID = "lyria-002"
+LOCATION = "us-central1"
 
-API_ENDPOINT = f"{GOOGLE_REGION}-aiplatform.googleapis.com"
-CLIENT_OPTIONS = {"api_endpoint": API_ENDPOINT}
+try:
+    aiplatform.init(project=GOOGLE_PROJECT_ID, location=LOCATION)
+except Exception as e:
+    print(f"Error initializing Vertex AI. Make sure you are authenticated with 'gcloud auth application-default login'. Error: {e}")
 
-client = aiplatform.gapic.PredictionServiceClient(client_options=CLIENT_OPTIONS)
+MODEL_ID = "publishers/google/models/lyria-002"
+ENDPOINT = f"projects/{GOOGLE_PROJECT_ID}/locations/{LOCATION}/{MODEL_ID}"
 
-endpoint_path = f"projects/{GOOGLE_PROJECT_ID}/locations/{GOOGLE_REGION}/publishers/{PUBLISHER}/models/{MODEL_ID}"
+
+def generate_audio_from_prompt(prompt_text: str):
+    
+    print(f"Starting Vertex AI generation for: '{prompt_text}'")
+
+    client_options = {"api_endpoint": f"{LOCATION}-aiplatform.googleapis.com"}
+    client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
+
+    instance = Value(
+        struct_value={
+            "prompt": Value(string_value=prompt_text),
+        }
+    )
+    instances = [instance]
+
+    parameters_dict = {
+        "output_format": Value(string_value="wav"),
+        "duration_seconds": Value(number_value=30.0),
+    }
+    
+    parameters = Value(struct_value=parameters_dict)
+
+    response = client.predict(
+        endpoint=ENDPOINT, instances=instances, parameters=parameters
+    )
+
+    print("Generation complete. Processing response...")
+
+    if not response.predictions:
+        raise ValueError("API returned no predictions.")
+
+    prediction_map = response.predictions[0]
+    
+    if 'bytesBase64Encoded' not in prediction_map:
+        if 'error' in prediction_map:
+            error_message = prediction_map['error'].get('message', 'Unknown error')
+            if "recitation" in error_message.lower():
+                 raise ValueError(f"Audio generation failed with the following error: {error_message}. Please modify your prompt and try again.")
+            raise ValueError(f"API Error: {error_message}")
+        raise ValueError("API response did not contain 'bytesBase64Encoded' field.")
+
+    base64_audio = prediction_map['bytesBase64Encoded']
+    
+    return base64_audio
 
 
 @app.route('/generate-music', methods=['POST'])
 def handle_generate_music():
-    """
-    This is the HTTP endpoint the JavaScript frontend will call.
-    It uses the Vertex AI (non-streaming) model.
-    """
     try:
         data = request.json
         if not data or 'prompt' not in data:
             return jsonify({"error": "No prompt provided"}), 400
         
-        prompt_text = data.get('prompt', 'minimal techno')
-        bpm = data.get('bpm', 90)
-        if 'config' in data and 'bpm' in data['config']:
-            bpm = data['config']['bpm']
+        prompt = data.get('prompt')
         
-        duration = data.get('duration_sec', 15)
-        
-        full_prompt = f"{prompt_text} at {bpm} BPM"
-        
-        print(f"Starting Vertex AI generation for: '{full_prompt}'")
-        
-        instances_dict = {
-            "prompt": full_prompt,
-            "duration_seconds": duration,
-        }
-        
-        instances = [json_format.ParseDict(instances_dict, Value())]
-        
-        response = client.predict(
-            endpoint=endpoint_path, 
-            instances=instances, 
-            parameters=None
-        )
-        
-        print("Generation complete. Processing response...")
-        
-        if not response.predictions:
-            raise ValueError("API returned no predictions.")
-            
-        prediction_map = response.predictions[0]
-        
-        base64_audio = prediction_map['bytesBase64Encoded']
+        base64_audio = generate_audio_from_prompt(prompt)
         
         if not base64_audio:
-            raise ValueError("API response did not contain audio data.")
-        
-
+            return jsonify({"error": "Failed to generate audio"}), 500
+            
         return jsonify({
             "audioBase64": base64_audio
         })
 
+    except ValueError as ve:
+        print(f"Known error in /generate-music: {ve}")
+        return jsonify({"error": str(ve)}), 400
     except Exception as e:
-        print(f"Error in /generate-music endpoint: {e}")
+        print(f"Unknown error in /generate-music endpoint: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     print(f"Starting Vertex AI Flask server for project: {GOOGLE_PROJECT_ID}")
+    print(f"Listening on http://localhost:5001")
     app.run(host='0.0.0.0', port=5001)
 
