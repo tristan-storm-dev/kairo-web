@@ -10,13 +10,37 @@
 
     <div class="container">
         <h1>Kairo</h1>
-        
-        <label for="prompt-input">Enter your prompt:</label>
-        <textarea id="prompt-input" rows="3">minimal techno</textarea>
-
-        <button id="generate-button">Generate & Play</button>
-
         <div id="status-message">Ready</div>
+
+        <div class="prompt-preview-container">
+            <span class="prompt-part" id="prompt-preview-genre">Genre</span>
+            <span class="prompt-arrow" id="arrow-1" style="display: none;">></span>
+            <span class="prompt-part" id="prompt-preview-subgenre">Style</span>
+            <span class="prompt-arrow" id="arrow-2" style="display: none;">></span>
+            <span class="prompt-part" id="prompt-preview-vibe">Vibe</span>
+        </div>
+
+        <div class="step" id="step-1-genre">
+            <h2>Step 1: Choose a Base Genre</h2>
+            <div class="grid-container" id="genre-grid">
+            </div>
+        </div>
+
+        <div class="step" id="step-2-subgenre" style="display: none;">
+            <h2>Step 2: Choose a Style</h2>
+            <div class="grid-container" id="subgenre-grid">
+            </div>
+        </div>
+        
+        <div class="step" id="step-3-vibe" style="display: none;">
+            <h2>Step 3: Choose a Vibe</h2>
+            <div class="grid-container" id="vibe-grid">
+            </div>
+        </div>
+
+        <button id="generate-button" class="generate-btn" style="display: none;">
+            <span class="generate-btn-text">Generate Music</span>
+        </button>
 
         <div id="audio-container"></div>
     </div>
