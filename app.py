@@ -3,8 +3,6 @@ import base64
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from google.cloud import aiplatform
-from google.protobuf import json_format
-from google.protobuf.struct_pb2 import Value
 
 app = Flask(__name__)
 CORS(app)
@@ -20,30 +18,19 @@ except Exception as e:
 MODEL_ID = "publishers/google/models/lyria-002"
 ENDPOINT = f"projects/{GOOGLE_PROJECT_ID}/locations/{LOCATION}/{MODEL_ID}"
 
-
 def generate_audio_from_prompt(prompt_text: str):
-    
     print(f"Starting Vertex AI generation for: '{prompt_text}'")
 
     client_options = {"api_endpoint": f"{LOCATION}-aiplatform.googleapis.com"}
     client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
 
-    instance = Value(
-        struct_value={
-            "prompt": Value(string_value=prompt_text),
-        }
-    )
-    instances = [instance]
-
-    parameters_dict = {
-        "output_format": Value(string_value="wav"),
-        "duration_seconds": Value(number_value=30.0),
-    }
-    
-    parameters = Value(struct_value=parameters_dict)
+    instances = [{"prompt": prompt_text}]
+    parameters = {"output_format": "wav", "duration_seconds": 30.0}
 
     response = client.predict(
-        endpoint=ENDPOINT, instances=instances, parameters=parameters
+        endpoint=ENDPOINT,
+        instances=instances,
+        parameters=parameters
     )
 
     print("Generation complete. Processing response...")
@@ -65,7 +52,6 @@ def generate_audio_from_prompt(prompt_text: str):
     
     return base64_audio
 
-
 @app.route('/generate-music', methods=['POST'])
 def handle_generate_music():
     try:
@@ -74,7 +60,6 @@ def handle_generate_music():
             return jsonify({"error": "No prompt provided"}), 400
         
         prompt = data.get('prompt')
-        
         base64_audio = generate_audio_from_prompt(prompt)
         
         if not base64_audio:
@@ -95,4 +80,3 @@ if __name__ == '__main__':
     print(f"Starting Vertex AI Flask server for project: {GOOGLE_PROJECT_ID}")
     print(f"Listening on http://localhost:5001")
     app.run(host='0.0.0.0', port=5001)
-
