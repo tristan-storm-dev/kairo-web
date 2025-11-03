@@ -7,13 +7,18 @@
     <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
-    <section id="home-screen" class="screen split-hero">
-        <div class="split-left"></div>
-        <div class="split-right">
+    <section id="home-screen" class="screen video-hero">
+        <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+            <source src="../assets/home-video.mp4" type="video/mp4" />
+            <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4" />
+        </video>
+        <div class="overlay-dark" aria-hidden="true"></div>
+        <div class="grain-overlay" aria-hidden="true"></div>
+        <div class="hero-center">
             <div class="container">
-                <h1 class="logo">KAIRO</h1>
-                <p class="tagline">turn chaos to sound</p>
-                <div class="hero-actions">
+                <h1 class="logo" style="text-align:center;">KAIRO</h1>
+                <p class="tagline" style="text-align:center;">turn chaos to sound</p>
+                <div class="hero-actions" style="display:flex; gap:16px; justify-content:center;">
                     <a href="labs.html" class="primary-btn btn-fill">Explore Lab</a>
                     <a href="how.html" class="ghost-btn">How It Works</a>
                 </div>

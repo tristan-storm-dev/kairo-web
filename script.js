@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const path = window.location.pathname;
     const isLabs = path.endsWith('/pages/labs.html');
     const isGenreLab = path.endsWith('/pages/genre.html');
+    const isHome = path.endsWith('/pages/home.html');
     const isTechno = path.endsWith('/pages/techno.html');
     const isHouse = path.endsWith('/pages/house.html');
     const isHipHop = path.endsWith('/pages/hiphop.html');
@@ -214,6 +215,25 @@ document.addEventListener("DOMContentLoaded", () => {
         if (subGenreGrid) subGenreGrid.addEventListener("click", handleSubGenreClick);
         if (vibeGrid) vibeGrid.addEventListener("click", handleVibeClick);
         if (generateButton) generateButton.addEventListener("click", generateAndPlay);
+    }
+
+    if (isHome) {
+        const panelVideo = document.querySelector('.panel-video') || document.querySelector('.bg-video');
+        if (panelVideo) {
+            const tryPlay = () => {
+                panelVideo.play().catch(() => {});
+            };
+            panelVideo.muted = true;
+            panelVideo.volume = 0;
+            panelVideo.autoplay = true;
+            panelVideo.loop = true;
+            panelVideo.setAttribute('playsinline', '');
+            if (panelVideo.readyState >= 2) {
+                tryPlay();
+            } else {
+                panelVideo.addEventListener('loadeddata', tryPlay, { once: true });
+            }
+        }
     }
 });
 
