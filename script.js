@@ -171,7 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
     const path = window.location.pathname;
-    const isLabs = path.endsWith('/pages/labs.html');
     const isGenreLab = path.endsWith('/pages/genre.html');
     const isHome = path.endsWith('/pages/home.html');
     const isTechno = path.endsWith('/pages/techno.html');
@@ -180,9 +179,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const isDnB = path.endsWith('/pages/drum-and-bass.html');
     const isAmbient = path.endsWith('/pages/ambient.html');
 
-    if (isLabs) {
-        enterLabSelect();
-    }
 
     if (isGenreLab) {
         const params = new URLSearchParams(window.location.search);
@@ -233,6 +229,165 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 panelVideo.addEventListener('loadeddata', tryPlay, { once: true });
             }
+        }
+
+        
+        if (window.feather && typeof window.feather.replace === 'function') {
+            window.feather.replace();
+        }
+
+        
+        const heroCenter = document.querySelector('.hero-center');
+        const exploreLink = document.querySelector('[data-open="labs"]');
+        const howLink = document.querySelector('[data-open="how"]');
+        const labsOverlay = document.getElementById('overlay-labs');
+        const howOverlay = document.getElementById('overlay-how');
+
+        
+        const homeEntry = sessionStorage.getItem('homeEntry');
+        if (heroCenter && homeEntry) {
+            document.documentElement.classList.add('transitioning');
+            document.body.classList.add('transitioning');
+            heroCenter.classList.add(homeEntry === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
+            heroCenter.addEventListener('animationend', () => {
+                document.documentElement.classList.remove('transitioning');
+                document.body.classList.remove('transitioning');
+            }, { once: true });
+            sessionStorage.removeItem('homeEntry');
+        }
+
+        const showOverlay = (overlayEl, dir) => {
+            if (!overlayEl) return;
+            document.documentElement.classList.add('transitioning');
+            document.body.classList.add('transitioning');
+            overlayEl.classList.add('visible');
+            overlayEl.classList.remove('slide-in-top','slide-in-bottom','slide-out-top','slide-out-bottom');
+            overlayEl.classList.add(dir === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
+
+            
+            if (heroCenter) {
+                heroCenter.classList.remove('slide-in-top','slide-in-bottom');
+                heroCenter.classList.add(dir === 'bottom' ? 'slide-out-top' : 'slide-out-bottom');
+            }
+
+            
+            if (overlayEl === labsOverlay) {
+                const doors = overlayEl.querySelectorAll('.door');
+                doors.forEach((door, idx) => {
+                    door.classList.remove('door-wave-out');
+                    door.style.setProperty('--wave-delay', `${80 * idx}ms`);
+                    door.classList.add('door-wave-in');
+                });
+            }
+
+            overlayEl.addEventListener('animationend', () => {
+                document.documentElement.classList.remove('transitioning');
+                document.body.classList.remove('transitioning');
+            }, { once: true });
+        };
+
+        const hideOverlay = (overlayEl, dir) => new Promise((resolve) => {
+            if (!overlayEl) { resolve(); return; }
+            document.documentElement.classList.add('transitioning');
+            document.body.classList.add('transitioning');
+            overlayEl.classList.remove('slide-in-top','slide-in-bottom');
+            overlayEl.classList.add(dir === 'bottom' ? 'slide-out-bottom' : 'slide-out-top');
+            overlayEl.addEventListener('animationend', () => {
+                overlayEl.classList.remove('visible','slide-out-top','slide-out-bottom');
+                document.documentElement.classList.remove('transitioning');
+                document.body.classList.remove('transitioning');
+                
+                if (heroCenter) {
+                    heroCenter.classList.remove('slide-out-top','slide-out-bottom');
+                    heroCenter.classList.add(dir === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
+                }
+                resolve();
+            }, { once: true });
+
+            
+            if (overlayEl === labsOverlay) {
+                const doors = Array.from(overlayEl.querySelectorAll('.door'));
+                doors.forEach((door, idx) => {
+                    const delay = 80 * (doors.length - 1 - idx);
+                    door.classList.remove('door-wave-in');
+                    door.style.setProperty('--wave-delay', `${delay}ms`);
+                    door.classList.add('door-wave-out');
+                });
+            }
+        });
+
+        if (exploreLink) {
+            exploreLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (labsOverlay) showOverlay(labsOverlay, 'bottom');
+            });
+        }
+
+        if (howLink) {
+            howLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (howOverlay) showOverlay(howOverlay, 'top');
+            });
+        }
+
+        
+        document.querySelectorAll('.overlay-close').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const which = btn.dataset.close;
+                if (which === 'labs' && labsOverlay) {
+                    await hideOverlay(labsOverlay, 'bottom');
+                } else if (which === 'how' && howOverlay) {
+                    await hideOverlay(howOverlay, 'top');
+                }
+            });
+        });
+
+        
+        if (labsOverlay) {
+            labsOverlay.addEventListener('click', async (e) => {
+                const doorLink = e.target.closest('.door');
+                if (!doorLink || !doorLink.href) return;
+                e.preventDefault();
+                const href = doorLink.getAttribute('href');
+                sessionStorage.setItem('nextEntry', 'bottom');
+                await hideOverlay(labsOverlay, 'bottom');
+                window.location.href = href;
+            });
+        }
+    }
+
+    
+    if (isTechno || isHouse || isHipHop || isDnB || isAmbient || isGenreLab) {
+        const containerEl = document.querySelector('.screen');
+        const entry = sessionStorage.getItem('nextEntry');
+        if (containerEl) {
+            document.documentElement.classList.add('transitioning');
+            document.body.classList.add('transitioning');
+            const dirClass = (entry ? (entry === 'bottom' ? 'slide-in-bottom' : 'slide-in-top') : 'slide-in-bottom');
+            containerEl.classList.add(dirClass);
+            containerEl.addEventListener('animationend', () => {
+                document.documentElement.classList.remove('transitioning');
+                document.body.classList.remove('transitioning');
+            }, { once: true });
+            sessionStorage.removeItem('nextEntry');
+        }
+
+        const backLink = document.querySelector('a[href="home.html"].ghost-btn');
+        if (backLink && containerEl) {
+            backLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const currentDir = entry || 'bottom';
+                const opposite = currentDir === 'bottom' ? 'top' : 'bottom';
+                sessionStorage.setItem('homeEntry', opposite);
+                document.documentElement.classList.add('transitioning');
+                document.body.classList.add('transitioning');
+                containerEl.classList.remove('slide-in-top','slide-in-bottom');
+                containerEl.classList.add(opposite === 'bottom' ? 'slide-out-bottom' : 'slide-out-top');
+                containerEl.addEventListener('animationend', () => {
+                    window.location.href = backLink.getAttribute('href');
+                }, { once: true });
+            });
         }
     }
 });

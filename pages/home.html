@@ -1,30 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kairo — Home</title>
-    <link rel="stylesheet" href="../style.css" />
-</head>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Kairo — Home</title>
+        <link rel="stylesheet" href="../style.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Raleway:wght@700&family=Anton&family=Russo+One&family=Cormorant+Garamond:wght@700&display=swap" rel="stylesheet">
+    </head>
 <body>
     <section id="home-screen" class="screen video-hero">
         <video class="bg-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
             <source src="../assets/home-video.mp4" type="video/mp4" />
             <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4" />
         </video>
-        <div class="overlay-dark" aria-hidden="true"></div>
+        
         <div class="grain-overlay" aria-hidden="true"></div>
         <div class="hero-center">
             <div class="container">
                 <h1 class="logo" style="text-align:center;">KAIRO</h1>
                 <p class="tagline" style="text-align:center;">turn chaos to sound</p>
                 <div class="hero-actions" style="display:flex; gap:16px; justify-content:center;">
-                    <a href="labs.html" class="primary-btn btn-fill">Explore Lab</a>
-                    <a href="how.html" class="ghost-btn">How It Works</a>
+                    <a href="#" class="primary-btn btn-fill" data-open="labs">Explore Labs</a>
+                    <a href="#" class="ghost-btn" data-open="how">How It Works</a>
                 </div>
             </div>
         </div>
     </section>
+    <section id="overlay-how" class="overlay screen" aria-hidden="true">
+        <div class="container">
+            <header class="screen-header">
+                <h1>How It Works</h1>
+                <a href="#" class="ghost-btn overlay-close" data-close="how">Close</a>
+            </header>
+            <div class="step">
+                <h2>Process</h2>
+                <p style="color:#cfcfcf; max-width:720px; line-height:1.6">
+                    Choose a lab (genre), refine with style and vibe, then generate.
+                    Kairo uses a clinical, minimal interface to focus on what matters — shaping sound.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="overlay-labs" class="overlay lab-doors-screen" aria-hidden="true">
+        <div class="overlay-header">
+            <div class="header-row">
+                <div class="left">
+                    <h1 class="logo">LABS</h1>
+                    <p class="guidance">Please select a lab</p>
+                </div>
+                <div class="right">
+                    <a href="#" class="ghost-btn overlay-close" data-close="labs">Return</a>
+                </div>
+            </div>
+        </div>
+        <div class="doors-grid">
+            <a class="door door-techno" href="techno.html">
+                <img class="door-cover" src="../assets/covers/techno-cover.png" alt="Techno Lab cover" />
+            </a>
+            <a class="door door-house" href="house.html">
+                <img class="door-cover" src="../assets/covers/house-cover.png" alt="House Lab cover" />
+            </a>
+            <a class="door door-hiphop" href="hiphop.html">
+                <img class="door-cover" src="../assets/covers/hiphop-cover.png" alt="Hip Hop Lab cover" />
+            </a>
+            <a class="door door-dnb" href="drum-and-bass.html">
+                <img class="door-cover" src="../assets/covers/dnb-cover.png" alt="DnB Lab cover" />
+            </a>
+            <a class="door door-ambient" href="ambient.html">
+                <img class="door-cover" src="../assets/covers/ambient-cover.png" alt="Ambient Lab cover" />
+            </a>
+        </div>
+    </section>
+    <script src="https://unpkg.com/feather-icons"></script>
     <script src="../script.js"></script>
 </body>
 </html>
