@@ -1,25 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
-    
     const BACKEND_URL = 'http://192.168.1.200:5001/generate-music';
 
-    const genreGrid = document.getElementById("genre-grid");
+    const labGenreGrid = document.getElementById("lab-genre-grid");
     const subGenreGrid = document.getElementById("subgenre-grid");
     const vibeGrid = document.getElementById("vibe-grid");
-    
-    const step1Genre = document.getElementById("step-1-genre");
     const step2SubGenre = document.getElementById("step-2-subgenre");
     const step3Vibe = document.getElementById("step-3-vibe");
-
     const generateButton = document.getElementById("generate-button");
     const statusMessage = document.getElementById("status-message");
     const audioContainer = document.getElementById("audio-container");
-
+    const genreLabTitle = document.getElementById("genre-lab-title");
     const previewGenre = document.getElementById("prompt-preview-genre");
     const previewSubGenre = document.getElementById("prompt-preview-subgenre");
     const previewVibe = document.getElementById("prompt-preview-vibe");
     const arrow1 = document.getElementById("arrow-1");
     const arrow2 = document.getElementById("arrow-2");
-
 
     const promptData = {
         "Techno": ["Minimal", "Hard", "Melodic", "Dark", "Ambient"],
@@ -29,15 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "Ambient": ["Calm", "Dark", "Generative", "Melodic"]
     };
 
-    const vibes = [
-        "Dark",
-        "Energetic",
-        "Calm",
-        "Sad",
-        "Euphoric",
-        "Futuristic",
-        "Mysterious"
-    ];
+    const vibes = ["Dark", "Energetic", "Calm", "Sad", "Euphoric", "Futuristic", "Mysterious"];
 
     let selectedGenre = null;
     let selectedSubGenre = null;
@@ -62,26 +49,40 @@ document.addEventListener("DOMContentLoaded", () => {
         if (arrowElement) arrowElement.style.display = "none";
     }
 
-    function handleGenreClick(e) {
-        const target = e.target.closest('.grid-button');
-        if (!target) return;
+    function enterLabSelect() {
+        if (!labGenreGrid) return;
+        createButtons(Object.keys(promptData), labGenreGrid, "genre");
+        labGenreGrid.addEventListener("click", handleLabGenreClick);
+    }
 
-        const value = target.dataset.value;
-        selectedGenre = value;
-
-        genreGrid.querySelectorAll('.grid-button').forEach(btn => btn.classList.remove('active'));
-        target.classList.add('active');
-
-        previewGenre.textContent = value;
+    function enterGenreLab(genre) {
+        if (!previewGenre || !subGenreGrid) return;
+        selectedGenre = genre;
+        previewGenre.textContent = genre;
         previewGenre.classList.add('selected');
-        arrow1.style.display = "inline";
+        if (arrow1) arrow1.style.display = "inline";
+        if (genreLabTitle) genreLabTitle.textContent = `${genre} Lab`;
 
-        const subGenres = promptData[value];
+        const subGenres = promptData[genre] || [];
         createButtons(subGenres, subGenreGrid, "subgenre");
         step2SubGenre.style.display = "block";
-
         resetStep(step3Vibe, previewVibe, arrow2);
-        generateButton.style.display = "none";
+        if (generateButton) generateButton.style.display = "none";
+    }
+
+    function handleLabGenreClick(e) {
+        const target = e.target.closest('.grid-button');
+        if (!target) return;
+        const value = target.dataset.value;
+        const filenameMap = {
+            'Techno': 'techno.html',
+            'House': 'house.html',
+            'Hip Hop': 'hiphop.html',
+            'Drum & Bass': 'drum-and-bass.html',
+            'Ambient': 'ambient.html'
+        };
+        const targetFile = filenameMap[value] || `genre.html?genre=${encodeURIComponent(value)}`;
+        window.location.href = targetFile;
     }
 
     function handleSubGenreClick(e) {
@@ -93,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         subGenreGrid.querySelectorAll('.grid-button').forEach(btn => btn.classList.remove('active'));
         target.classList.add('active');
-        
+
         previewSubGenre.textContent = value;
         previewSubGenre.classList.add('selected');
         arrow2.style.display = "inline";
@@ -114,13 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         previewVibe.textContent = value;
         previewVibe.classList.add('selected');
-        
+
         generateButton.style.display = "flex";
     }
 
-
     async function generateAndPlay() {
-        
         if (!selectedGenre || !selectedSubGenre || !selectedVibe) {
             statusMessage.textContent = "Please complete all 3 steps.";
             return;
@@ -130,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         generateButton.disabled = true;
         statusMessage.innerHTML = '<span class="loader"></span>Generating... This may take 20-30 seconds.';
-        audioContainer.innerHTML = ""; 
+        audioContainer.innerHTML = "";
 
         try {
             const response = await fetch(BACKEND_URL, {
@@ -138,9 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    prompt: promptText
-                }),
+                body: JSON.stringify({ prompt: promptText }),
             });
 
             if (!response.ok) {
@@ -160,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
             statusMessage.textContent = "Playing generated music!";
             const audioSrc = `data:audio/wav;base64,${data.audioBase64}`;
             const audioPlayer = new Audio(audioSrc);
-            audioPlayer.controls = true; 
+            audioPlayer.controls = true;
             audioContainer.appendChild(audioPlayer);
             audioPlayer.play();
 
@@ -172,12 +169,51 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    createButtons(Object.keys(promptData), genreGrid, "genre");
+    
+    const path = window.location.pathname;
+    const isLabs = path.endsWith('/pages/labs.html');
+    const isGenreLab = path.endsWith('/pages/genre.html');
+    const isTechno = path.endsWith('/pages/techno.html');
+    const isHouse = path.endsWith('/pages/house.html');
+    const isHipHop = path.endsWith('/pages/hiphop.html');
+    const isDnB = path.endsWith('/pages/drum-and-bass.html');
+    const isAmbient = path.endsWith('/pages/ambient.html');
 
+    if (isLabs) {
+        enterLabSelect();
+    }
 
-    genreGrid.addEventListener("click", handleGenreClick);
-    subGenreGrid.addEventListener("click", handleSubGenreClick);
-    vibeGrid.addEventListener("click", handleVibeClick);
-    generateButton.addEventListener("click", generateAndPlay);
+    if (isGenreLab) {
+        const params = new URLSearchParams(window.location.search);
+        const genre = params.get('genre');
+        if (genre) {
+            enterGenreLab(genre);
+        }
+        if (subGenreGrid) subGenreGrid.addEventListener("click", handleSubGenreClick);
+        if (vibeGrid) vibeGrid.addEventListener("click", handleVibeClick);
+        if (generateButton) generateButton.addEventListener("click", generateAndPlay);
+    }
+
+    if (isTechno) {
+        enterGenreLab('Techno');
+    }
+    if (isHouse) {
+        enterGenreLab('House');
+    }
+    if (isHipHop) {
+        enterGenreLab('Hip Hop');
+    }
+    if (isDnB) {
+        enterGenreLab('Drum & Bass');
+    }
+    if (isAmbient) {
+        enterGenreLab('Ambient');
+    }
+
+    if (isTechno || isHouse || isHipHop || isDnB || isAmbient) {
+        if (subGenreGrid) subGenreGrid.addEventListener("click", handleSubGenreClick);
+        if (vibeGrid) vibeGrid.addEventListener("click", handleVibeClick);
+        if (generateButton) generateButton.addEventListener("click", generateAndPlay);
+    }
 });
 
