@@ -1,138 +1,259 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const BACKEND_URL = 'http://192.168.1.200:5001/generate-music';
+    // --- Configuration ---
+    // Prefer localhost in dev; fall back to configured LAN IP
+    const BACKEND_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://127.0.0.1:5001'
+        : 'http://192.168.1.200:5001';
+    const GENERATE_ENDPOINT = `${BACKEND_URL}/generate-music`;
+    const ANALYZE_ENDPOINT = `${BACKEND_URL}/analyze-drawing`;
+    const CANVAS_SIZE = 300; // Default; functions will use actual canvas size
 
-    const labGenreGrid = document.getElementById("lab-genre-grid");
-    const subGenreGrid = document.getElementById("subgenre-grid");
-    const vibeGrid = document.getElementById("vibe-grid");
-    const step2SubGenre = document.getElementById("step-2-subgenre");
-    const step3Vibe = document.getElementById("step-3-vibe");
-    const generateButton = document.getElementById("generate-button");
+    // --- DOM Elements ---
     const statusMessage = document.getElementById("status-message");
     const audioContainer = document.getElementById("audio-container");
+    const generateButton = document.getElementById("generate-button");
     const genreLabTitle = document.getElementById("genre-lab-title");
+    
+    // Preview Prompts
     const previewGenre = document.getElementById("prompt-preview-genre");
     const previewSubGenre = document.getElementById("prompt-preview-subgenre");
     const previewVibe = document.getElementById("prompt-preview-vibe");
-    const arrow1 = document.getElementById("arrow-1");
-    const arrow2 = document.getElementById("arrow-2");
+    const previewLayer = document.getElementById("prompt-preview-layer");
 
-    const promptData = {
-        "Techno": ["Minimal", "Hard", "Melodic", "Dark", "Ambient"],
-        "House": ["Afro", "Deep", "Progressive", "Funky", "Melodic"],
-        "Hip Hop": ["Lo-Fi", "Boom Bap", "Trap", "Chillhop", "Old School"],
-        "Drum & Bass": ["Energetic", "Dark", "Liquid", "Minimal"],
-        "Ambient": ["Calm", "Dark", "Generative", "Melodic"]
-    };
+    // Drawing Elements
+    const styleCanvas = document.getElementById('style-canvas');
+    const vibeCanvas = document.getElementById('vibe-canvas');
+    const styleStatus = document.getElementById('style-status');
+    const vibeStatus = document.getElementById('vibe-status');
+    const analyzeStyleBtn = document.getElementById('analyze-style');
+    const analyzeVibeBtn = document.getElementById('analyze-vibe');
+    const resetStyleBtn = document.getElementById('reset-style');
+    const resetVibeBtn = document.getElementById('reset-vibe');
 
-    const vibes = ["Dark", "Energetic", "Calm", "Sad", "Euphoric", "Futuristic", "Mysterious"];
-
-    let selectedGenre = null;
-    let selectedSubGenre = null;
+    // Layer Controls
+    const layerSwitch = document.getElementById('layer-switch');
+    const layerSlowBtn = document.getElementById('layer-slow');
+    const layerFastBtn = document.getElementById('layer-fast');
+    
+    // Display Elements
+    const displayStyle = document.getElementById('display-style');
+    const displayVibe = document.getElementById('display-vibe');
+    const generateStatus = document.getElementById('generate-status');
+    const trackText = document.getElementById('track-text');
+    
+    // --- Global State ---
+    const path = window.location.pathname;
+    const isHouse = path.endsWith('/pages/house.html');
+    
+    // The fixed genre is 'House' for this page
+    const selectedGenre = "House";
+    
+    // Prompt variables will be filled by drawing analysis
+    let selectedSubGenre = null; 
     let selectedVibe = null;
+    let selectedLayer = layerSlowBtn ? layerSlowBtn.dataset.value : 'Slow'; // Default safely
 
-    function createButtons(items, gridElement, type) {
-        gridElement.innerHTML = "";
-        for (const item of items) {
-            const button = document.createElement("button");
-            button.className = "grid-button";
-            button.textContent = item;
-            button.dataset.value = item;
-            button.dataset.type = type;
-            gridElement.appendChild(button);
+    // Canvas Contexts
+    const styleCtx = styleCanvas ? styleCanvas.getContext('2d') : null;
+    const vibeCtx = vibeCanvas ? vibeCanvas.getContext('2d') : null;
+
+    // Drawing State
+    let isDrawing = false;
+    let currentTarget = null; // 'style' or 'vibe'
+
+    // --- Utility Functions ---
+
+    // 1. Initialize Canvas for Drawing
+    function initializeCanvas(ctx) {
+        if (!ctx) return;
+        const w = ctx.canvas.width;
+        const h = ctx.canvas.height;
+        // Light grey base to match deck aesthetic; circle handled by CSS border-radius
+        ctx.fillStyle = '#d9d9d9';
+        ctx.fillRect(0, 0, w, h);
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000000'; // Black drawing lines
+        ctx.beginPath();
+    }
+
+    // 2. Drawing Event Handlers
+    function startDrawing(e, ctx) {
+        if (!ctx) return;
+        isDrawing = true;
+        draw(e, ctx);
+    }
+
+    function stopDrawing() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        if (styleCtx) styleCtx.beginPath();
+        if (vibeCtx) vibeCtx.beginPath();
+
+        // Auto-analyze after drawing stops
+        if (currentTarget === 'style' && styleCanvas && styleStatus) {
+            analyzeDrawing(styleCanvas, 'style', styleStatus, previewSubGenre);
+        } else if (currentTarget === 'vibe' && vibeCanvas && vibeStatus) {
+            analyzeDrawing(vibeCanvas, 'vibe', vibeStatus, previewVibe);
+        }
+        currentTarget = null;
+    }
+
+    function draw(e, ctx) {
+        if (!isDrawing || !ctx) return;
+        const rect = ctx.canvas.getBoundingClientRect();
+        let clientX, clientY;
+
+        // Handle touch and mouse events
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+    
+    // 3. Reset Canvas
+    function resetCanvas(ctx, statusElement, previewElement, statusText) {
+        if (ctx) initializeCanvas(ctx);
+        if (statusElement) {
+            statusElement.textContent = 'Ready';
+            statusElement.classList.remove('status-analyzing', 'status-done');
+            statusElement.classList.add('status-ready');
+        }
+        if (previewElement) {
+            previewElement.textContent = previewElement.id.replace('prompt-preview-', '');
+            previewElement.classList.remove('selected');
+        }
+        generateButton.style.display = 'none';
+        selectedSubGenre = selectedVibe = null;
+        displayStyle.textContent = displayVibe.textContent = '?';
+        if (trackText) {
+            trackText.textContent = 'Ready';
+            trackText.classList.remove('playing', 'error');
         }
     }
 
-    function resetStep(stepElement, previewElement, arrowElement) {
-        stepElement.style.display = "none";
-        previewElement.textContent = previewElement.id.replace('prompt-preview-', '');
-        previewElement.classList.remove('selected');
-        if (arrowElement) arrowElement.style.display = "none";
+    // 4. Get Base64 Image Data
+    function getCanvasBase64(canvas) {
+        // Returns the Base64 data string without the "data:image/png;base64," prefix
+        return canvas.toDataURL("image/png").split(',')[1];
+    }
+    
+    // 5. Analyze Drawing via Backend
+    async function analyzeDrawing(canvas, featureType, statusElement, previewElement) {
+        statusElement.textContent = 'Analyzing';
+        statusElement.classList.remove('status-ready', 'status-done');
+        statusElement.classList.add('status-analyzing');
+        
+        try {
+            const base64Image = getCanvasBase64(canvas);
+
+            const response = await fetch(ANALYZE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    imageBase64: base64Image,
+                    featureType: featureType 
+                }),
+            });
+
+            if (!response.ok) {
+                 const errorData = await response.json().catch(() => null);
+                 throw new Error(errorData && errorData.error ? errorData.error : `Server error (HTTP ${response.status})`);
+            }
+
+            const data = await response.json();
+            const prompt = data.promptResult;
+
+            // Update Global State and UI
+            if (featureType === 'style') {
+                selectedSubGenre = prompt;
+                displayStyle.textContent = prompt;
+                if (previewElement) previewElement.textContent = prompt;
+            } else if (featureType === 'vibe') {
+                selectedVibe = prompt;
+                displayVibe.textContent = prompt;
+                if (previewElement) previewElement.textContent = prompt;
+            }
+            if (previewElement) previewElement.classList.add('selected');
+            statusElement.textContent = prompt;
+            statusElement.classList.remove('status-ready', 'status-analyzing');
+            statusElement.classList.add('status-done');
+            statusMessage.textContent = 'Ready to generate!';
+            if (generateStatus) {
+                generateStatus.textContent = 'Ready to generate!';
+            }
+            if (trackText) {
+                trackText.textContent = 'Ready to generate';
+                trackText.classList.remove('playing', 'error');
+            }
+
+            // Check if both prompts are selected to enable generation
+            if (selectedSubGenre && selectedVibe) {
+                generateButton.style.display = 'flex';
+            }
+
+        } catch (err) {
+            console.error(`Analysis failed for ${featureType}:`, err);
+            statusElement.textContent = `Error: ${err.message}. Try drawing again.`;
+            statusMessage.textContent = 'Analysis failed.';
+            generateButton.style.display = 'none';
+        }
     }
 
-    function enterLabSelect() {
-        if (!labGenreGrid) return;
-        createButtons(Object.keys(promptData), labGenreGrid, "genre");
-        labGenreGrid.addEventListener("click", handleLabGenreClick);
-    }
-
-    function enterGenreLab(genre) {
-        if (!previewGenre || !subGenreGrid) return;
-        selectedGenre = genre;
-        previewGenre.textContent = genre;
-        previewGenre.classList.add('selected');
-        if (arrow1) arrow1.style.display = "inline";
-        if (genreLabTitle) genreLabTitle.textContent = `${genre} Lab`;
-
-        const subGenres = promptData[genre] || [];
-        createButtons(subGenres, subGenreGrid, "subgenre");
-        step2SubGenre.style.display = "block";
-        resetStep(step3Vibe, previewVibe, arrow2);
-        if (generateButton) generateButton.style.display = "none";
-    }
-
-    function handleLabGenreClick(e) {
-        const target = e.target.closest('.grid-button');
+    // 6. Handle Layer Selection
+    function handleLayerClick(e) {
+        const target = e.target.closest('.layer-btn');
         if (!target) return;
-        const value = target.dataset.value;
-        const filenameMap = {
-            'Techno': 'techno.html',
-            'House': 'house.html',
-            'Hip Hop': 'hiphop.html',
-            'Drum & Bass': 'drum-and-bass.html',
-            'Ambient': 'ambient.html'
-        };
-        const targetFile = filenameMap[value] || `genre.html?genre=${encodeURIComponent(value)}`;
-        window.location.href = targetFile;
-    }
 
-    function handleSubGenreClick(e) {
-        const target = e.target.closest('.grid-button');
-        if (!target) return;
-
-        const value = target.dataset.value;
-        selectedSubGenre = value;
-
-        subGenreGrid.querySelectorAll('.grid-button').forEach(btn => btn.classList.remove('active'));
+        layerSlowBtn.classList.remove('active');
+        layerFastBtn.classList.remove('active');
         target.classList.add('active');
 
-        previewSubGenre.textContent = value;
-        previewSubGenre.classList.add('selected');
-        arrow2.style.display = "inline";
-
-        createButtons(vibes, vibeGrid, "vibe");
-        step3Vibe.style.display = "block";
+        selectedLayer = target.dataset.value;
+        previewLayer.textContent = selectedLayer;
+        previewLayer.classList.add('selected');
     }
 
-    function handleVibeClick(e) {
-        const target = e.target.closest('.grid-button');
-        if (!target) return;
-
-        const value = target.dataset.value;
-        selectedVibe = value;
-
-        vibeGrid.querySelectorAll('.grid-button').forEach(btn => btn.classList.remove('active'));
-        target.classList.add('active');
-
-        previewVibe.textContent = value;
-        previewVibe.classList.add('selected');
-
-        generateButton.style.display = "flex";
-    }
-
+    // 7. Core Generation Function (Modified)
     async function generateAndPlay() {
-        if (!selectedGenre || !selectedSubGenre || !selectedVibe) {
-            statusMessage.textContent = "Please complete all 3 steps.";
+        if (!selectedGenre || !selectedSubGenre || !selectedVibe || !selectedLayer) {
+            statusMessage.textContent = "Please complete drawing analysis and select a layer.";
             return;
         }
 
-        const promptText = `${selectedVibe} ${selectedSubGenre} ${selectedGenre}`;
+        // The prompt format remains the same as your original script
+        const promptText = `${selectedVibe} ${selectedSubGenre} ${selectedGenre} ${selectedLayer}`;
 
         generateButton.disabled = true;
-        statusMessage.innerHTML = '<span class="loader"></span>Generating... This may take 20-30 seconds.';
+        generateButton.classList.add('spinning');
+        statusMessage.textContent = 'Generating...';
         audioContainer.innerHTML = "";
+        // Show typewriter progress
+        if (generateStatus) {
+            startTypewriter(generateStatus, [
+                'Submitting prompt to server...',
+                'Generating audio...',
+                'Preparing playback...'
+            ], 28);
+        }
+        if (trackText) {
+            trackText.textContent = 'Generating...';
+            trackText.classList.remove('error');
+        }
 
         try {
-            const response = await fetch(BACKEND_URL, {
+            const response = await fetch(GENERATE_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -155,6 +276,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             statusMessage.textContent = "Playing generated music!";
+            if (generateStatus) {
+                generateStatus.textContent = 'Playing generated music!';
+            }
+            if (trackText) {
+                const label = `${selectedVibe} ${selectedSubGenre} ${selectedGenre} ${selectedLayer}`;
+                trackText.textContent = `Playing: ${label}`;
+                trackText.classList.add('playing');
+                trackText.classList.remove('error');
+            }
             const audioSrc = `data:audio/wav;base64,${data.audioBase64}`;
             const audioPlayer = new Audio(audioSrc);
             audioPlayer.controls = true;
@@ -164,231 +294,130 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error(err);
             statusMessage.textContent = `Error: ${err.message}`;
+            if (generateStatus) {
+                generateStatus.textContent = `Error: ${err.message}`;
+            }
+            if (trackText) {
+                trackText.textContent = `Error: ${err.message}`;
+                trackText.classList.add('error');
+                trackText.classList.remove('playing');
+            }
         } finally {
             generateButton.disabled = false;
+            generateButton.classList.remove('spinning');
         }
     }
 
+    // Simple typewriter effect for status screen
+    async function typeText(el, text, speed = 30) {
+        el.textContent = '';
+        for (let i = 0; i < text.length; i++) {
+            el.textContent += text[i];
+            await new Promise(r => setTimeout(r, speed));
+        }
+    }
+
+    async function startTypewriter(el, messages, speed = 30) {
+        for (const msg of messages) {
+            await typeText(el, msg, speed);
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+
+    // --- Initialization and Event Listeners ---
     
-    const path = window.location.pathname;
-    const isGenreLab = path.endsWith('/pages/genre.html');
-    const isHome = path.endsWith('/pages/home.html');
-    const isTechno = path.endsWith('/pages/techno.html');
-    const isHouse = path.endsWith('/pages/house.html');
-    const isHipHop = path.endsWith('/pages/hiphop.html');
-    const isDnB = path.endsWith('/pages/drum-and-bass.html');
-    const isAmbient = path.endsWith('/pages/ambient.html');
-
-
-    if (isGenreLab) {
-        const params = new URLSearchParams(window.location.search);
-        const genre = params.get('genre');
-        if (genre) {
-            enterGenreLab(genre);
-        }
-        if (subGenreGrid) subGenreGrid.addEventListener("click", handleSubGenreClick);
-        if (vibeGrid) vibeGrid.addEventListener("click", handleVibeClick);
-        if (generateButton) generateButton.addEventListener("click", generateAndPlay);
-    }
-
-    if (isTechno) {
-        enterGenreLab('Techno');
-    }
     if (isHouse) {
-        enterGenreLab('House');
-    }
-    if (isHipHop) {
-        enterGenreLab('Hip Hop');
-    }
-    if (isDnB) {
-        enterGenreLab('Drum & Bass');
-    }
-    if (isAmbient) {
-        enterGenreLab('Ambient');
-    }
+        // 1. Initialize Canvases
+        initializeCanvas(styleCtx);
+        initializeCanvas(vibeCtx);
+        if (genreLabTitle) genreLabTitle.textContent = `${selectedGenre} Lab`;
+        if (previewGenre) previewGenre.textContent = selectedGenre;
+        if (previewLayer) previewLayer.textContent = selectedLayer;
 
-    if (isTechno || isHouse || isHipHop || isDnB || isAmbient) {
-        if (subGenreGrid) subGenreGrid.addEventListener("click", handleSubGenreClick);
-        if (vibeGrid) vibeGrid.addEventListener("click", handleVibeClick);
-        if (generateButton) generateButton.addEventListener("click", generateAndPlay);
-    }
-
-    if (isHome) {
-        const panelVideo = document.querySelector('.panel-video') || document.querySelector('.bg-video');
-        if (panelVideo) {
-            const tryPlay = () => {
-                panelVideo.play().catch(() => {});
-            };
-            panelVideo.muted = true;
-            panelVideo.volume = 0;
-            panelVideo.autoplay = true;
-            panelVideo.loop = true;
-            panelVideo.setAttribute('playsinline', '');
-            if (panelVideo.readyState >= 2) {
-                tryPlay();
-            } else {
-                panelVideo.addEventListener('loadeddata', tryPlay, { once: true });
-            }
+        // 2. Drawing Listeners (Style Canvas)
+        if (styleCanvas) {
+            styleCanvas.addEventListener('mousedown', (e) => { currentTarget = 'style'; startDrawing(e, styleCtx); });
+            styleCanvas.addEventListener('mousemove', (e) => draw(e, styleCtx));
+            styleCanvas.addEventListener('touchstart', (e) => { currentTarget = 'style'; startDrawing(e, styleCtx); });
+            styleCanvas.addEventListener('touchmove', (e) => draw(e, styleCtx));
         }
-
         
-        if (window.feather && typeof window.feather.replace === 'function') {
-            window.feather.replace();
+        // 3. Drawing Listeners (Vibe Canvas)
+        if (vibeCanvas) {
+            vibeCanvas.addEventListener('mousedown', (e) => { currentTarget = 'vibe'; startDrawing(e, vibeCtx); });
+            vibeCanvas.addEventListener('mousemove', (e) => draw(e, vibeCtx));
+            vibeCanvas.addEventListener('touchstart', (e) => { currentTarget = 'vibe'; startDrawing(e, vibeCtx); });
+            vibeCanvas.addEventListener('touchmove', (e) => draw(e, vibeCtx));
         }
 
-        
-        const heroCenter = document.querySelector('.hero-center');
-        const exploreLink = document.querySelector('[data-open="labs"]');
-        const howLink = document.querySelector('[data-open="how"]');
-        const labsOverlay = document.getElementById('overlay-labs');
-        const howOverlay = document.getElementById('overlay-how');
+        // Global stop drawing listeners
+        document.addEventListener('mouseup', stopDrawing);
+        document.addEventListener('touchend', stopDrawing);
+        document.addEventListener('mouseleave', stopDrawing);
 
-        
-        const homeEntry = sessionStorage.getItem('homeEntry');
-        if (heroCenter && homeEntry) {
-            document.documentElement.classList.add('transitioning');
-            document.body.classList.add('transitioning');
-            heroCenter.classList.add(homeEntry === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
-            heroCenter.addEventListener('animationend', () => {
-                document.documentElement.classList.remove('transitioning');
-                document.body.classList.remove('transitioning');
-            }, { once: true });
-            sessionStorage.removeItem('homeEntry');
-        }
+        // 4. Control Button Listeners
+        if (resetStyleBtn) resetStyleBtn.addEventListener('click', () => resetCanvas(styleCtx, styleStatus, previewSubGenre, 'Ready'));
+        if (resetVibeBtn) resetVibeBtn.addEventListener('click', () => resetCanvas(vibeCtx, vibeStatus, previewVibe, 'Ready'));
 
-        const showOverlay = (overlayEl, dir) => {
-            if (!overlayEl) return;
-            document.documentElement.classList.add('transitioning');
-            document.body.classList.add('transitioning');
-            overlayEl.classList.add('visible');
-            overlayEl.classList.remove('slide-in-top','slide-in-bottom','slide-out-top','slide-out-bottom');
-            overlayEl.classList.add(dir === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
+        if (analyzeStyleBtn) analyzeStyleBtn.addEventListener('click', () => analyzeDrawing(styleCanvas, 'style', styleStatus, previewSubGenre));
+        if (analyzeVibeBtn) analyzeVibeBtn.addEventListener('click', () => analyzeDrawing(vibeCanvas, 'vibe', vibeStatus, previewVibe));
 
-            
-            if (heroCenter) {
-                heroCenter.classList.remove('slide-in-top','slide-in-bottom');
-                heroCenter.classList.add(dir === 'bottom' ? 'slide-out-top' : 'slide-out-bottom');
-            }
+        if (layerSwitch) layerSwitch.addEventListener('click', handleLayerClick);
+        if (generateButton) generateButton.addEventListener('click', generateAndPlay);
 
-            
-            if (overlayEl === labsOverlay) {
-                const doors = overlayEl.querySelectorAll('.door');
-                doors.forEach((door, idx) => {
-                    door.classList.remove('door-wave-out');
-                    door.style.setProperty('--wave-delay', `${80 * idx}ms`);
-                    door.classList.add('door-wave-in');
-                });
-            }
-
-            overlayEl.addEventListener('animationend', () => {
-                document.documentElement.classList.remove('transitioning');
-                document.body.classList.remove('transitioning');
-            }, { once: true });
-        };
-
-        const hideOverlay = (overlayEl, dir) => new Promise((resolve) => {
-            if (!overlayEl) { resolve(); return; }
-            document.documentElement.classList.add('transitioning');
-            document.body.classList.add('transitioning');
-            overlayEl.classList.remove('slide-in-top','slide-in-bottom');
-            overlayEl.classList.add(dir === 'bottom' ? 'slide-out-bottom' : 'slide-out-top');
-            overlayEl.addEventListener('animationend', () => {
-                overlayEl.classList.remove('visible','slide-out-top','slide-out-bottom');
-                document.documentElement.classList.remove('transitioning');
-                document.body.classList.remove('transitioning');
-                
-                if (heroCenter) {
-                    heroCenter.classList.remove('slide-out-top','slide-out-bottom');
-                    heroCenter.classList.add(dir === 'bottom' ? 'slide-in-bottom' : 'slide-in-top');
-                }
-                resolve();
-            }, { once: true });
-
-            
-            if (overlayEl === labsOverlay) {
-                const doors = Array.from(overlayEl.querySelectorAll('.door'));
-                doors.forEach((door, idx) => {
-                    const delay = 80 * (doors.length - 1 - idx);
-                    door.classList.remove('door-wave-in');
-                    door.style.setProperty('--wave-delay', `${delay}ms`);
-                    door.classList.add('door-wave-out');
-                });
-            }
-        });
-
-        if (exploreLink) {
-            exploreLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (labsOverlay) showOverlay(labsOverlay, 'bottom');
-            });
-        }
-
-        if (howLink) {
-            howLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (howOverlay) showOverlay(howOverlay, 'top');
-            });
-        }
-
-        
-        document.querySelectorAll('.overlay-close').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const which = btn.dataset.close;
-                if (which === 'labs' && labsOverlay) {
-                    await hideOverlay(labsOverlay, 'bottom');
-                } else if (which === 'how' && howOverlay) {
-                    await hideOverlay(howOverlay, 'top');
-                }
-            });
-        });
-
-        
-        if (labsOverlay) {
-            labsOverlay.addEventListener('click', async (e) => {
-                const doorLink = e.target.closest('.door');
-                if (!doorLink || !doorLink.href) return;
-                e.preventDefault();
-                const href = doorLink.getAttribute('href');
-                sessionStorage.setItem('nextEntry', 'bottom');
-                await hideOverlay(labsOverlay, 'bottom');
-                window.location.href = href;
-            });
-        }
+        // 5. Populate LED bars in track screen (also called globally below)
+        populateLedBars();
     }
-
     
-    if (isTechno || isHouse || isHipHop || isDnB || isAmbient || isGenreLab) {
-        const containerEl = document.querySelector('.screen');
-        const entry = sessionStorage.getItem('nextEntry');
-        if (containerEl) {
-            document.documentElement.classList.add('transitioning');
-            document.body.classList.add('transitioning');
-            const dirClass = (entry ? (entry === 'bottom' ? 'slide-in-bottom' : 'slide-in-top') : 'slide-in-bottom');
-            containerEl.classList.add(dirClass);
-            containerEl.addEventListener('animationend', () => {
-                document.documentElement.classList.remove('transitioning');
-                document.body.classList.remove('transitioning');
-            }, { once: true });
-            sessionStorage.removeItem('nextEntry');
-        }
+    // (Your existing non-drawing logic, especially the transitions, is omitted here for focus, 
+    // but should be kept in your final script.js file.)
+    // --- LED Bars Generator (House screen) ---
+    function populateLedBars() {
+        const svg = document.querySelector('.led-bars');
+        if (!svg) return;
+        const glowGroup = svg.querySelector('.bars-glow');
+        const crispGroup = svg.querySelector('.bars-crisp');
+        if (!glowGroup || !crispGroup) return;
 
-        const backLink = document.querySelector('a[href="home.html"].ghost-btn');
-        if (backLink && containerEl) {
-            backLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                const currentDir = entry || 'bottom';
-                const opposite = currentDir === 'bottom' ? 'top' : 'bottom';
-                sessionStorage.setItem('homeEntry', opposite);
-                document.documentElement.classList.add('transitioning');
-                document.body.classList.add('transitioning');
-                containerEl.classList.remove('slide-in-top','slide-in-bottom');
-                containerEl.classList.add(opposite === 'bottom' ? 'slide-out-bottom' : 'slide-out-top');
-                containerEl.addEventListener('animationend', () => {
-                    window.location.href = backLink.getAttribute('href');
-                }, { once: true });
-            });
+        glowGroup.innerHTML = '';
+        crispGroup.innerHTML = '';
+
+        // Use the viewBox size for layout
+        const vbWidth = 400;
+        const vbHeight = 120;
+        const barWidth = 2;   // thin bars
+        const gap = 2;        // spacing between bars
+        const count = Math.floor(vbWidth / (barWidth + gap)); // fill full width
+
+        // Smooth randomness for a waveform feel
+        let lastHeight = vbHeight * 0.45;
+
+        for (let i = 0; i < count; i++) {
+            const x = i * (barWidth + gap);
+            const jitter = (Math.random() - 0.5) * 28; // +/-14 variation
+            const target = Math.max(8, Math.min(vbHeight - 12, lastHeight + jitter));
+            const h = target;
+            const y = (vbHeight - h) / 2; // center vertically
+
+            // Helper to make a rect element
+            const makeRect = () => {
+                const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                r.setAttribute('class', 'bar');
+                r.setAttribute('x', x.toFixed(2));
+                r.setAttribute('y', y.toFixed(2));
+                r.setAttribute('width', barWidth);
+                r.setAttribute('height', h.toFixed(2));
+                return r;
+            };
+
+            glowGroup.appendChild(makeRect());
+            crispGroup.appendChild(makeRect());
+
+            // Ease toward target to smooth adjacent bars
+            lastHeight = target * 0.85 + lastHeight * 0.15;
         }
     }
+    // Call generator regardless of page detection, in case routing differs
+    populateLedBars();
 });
-

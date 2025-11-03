@@ -79,6 +79,18 @@ h2 {
     margin: 0 0 10px 0;
 }
 
+
+.logo-wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.logo-wordmark .logo-k-svg,
+.logo-wordmark .logo-airo-svg {
+    display: inline-block;
+    height: 1em; 
+}
+
 .tagline {
     color: #9a9a9a;
     text-transform: uppercase;
@@ -492,19 +504,18 @@ body.transitioning {
     justify-content: center;
     text-decoration: none;
     color: #fff;
-    border-right: 1px solid #121212;
-    border-left: 1px solid #121212;
-    box-shadow: inset 0 0 0 0 rgba(255,255,255,0.12);
-    transition: box-shadow 180ms ease, background 200ms ease, color 160ms ease;
+    border: none;
+    box-shadow: 0 0 0 1px #3a3a3a;
+    transition: box-shadow 180ms ease, background 200ms ease, color 160ms ease, transform 180ms ease;
     background: #0b0b0b;
     z-index: 1;
 }
 
-.lab-doors-screen .door:first-of-type { border-left-color: #1f1f1f; }
-.lab-doors-screen .door:last-of-type { border-right-color: #1f1f1f; }
+
 
 .lab-doors-screen .door:hover {
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.16);
+    box-shadow: 0 0 0 1px #3a3a3a, 0 8px 26px rgba(0,0,0,0.35);
+    transform: translateY(-2px);
 }
 
 .door-label {
@@ -598,27 +609,9 @@ body.transitioning {
 .door-ambient .door-label { font-family: 'Cormorant Garamond', serif; }
 
 
-.lab-doors-screen .door::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    padding: 2px; 
-    opacity: 0;
-    transition: opacity 220ms ease;
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    background: linear-gradient(120deg, #475B52 0%, #102A2E 50%, #475B52 100%);
-    z-index: 2;
-}
 
-.lab-doors-screen .door:hover::before {
-    opacity: 1;
-    animation: stroke-slide 2s ease-in-out infinite;
-    animation-direction: alternate;
-}
+.lab-doors-screen .door::before,
+.lab-doors-screen .door:hover::before { content: none !important; }
 
 
 .door-techno::before,
@@ -654,27 +647,90 @@ body.transitioning .lab-doors-screen { pointer-events: none; }
 
 
 .overlay.lab-doors-screen {
-    
-    --space: 24px; 
-    --overlay-padding: var(--space);
-    display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-columns: 1fr;
-    gap: var(--space);
-    padding: var(--overlay-padding);
-    padding-bottom: var(--overlay-padding); 
+    --space: 56px; 
     box-sizing: border-box;
+    background: #000;
+    color: #fff;
+    height: 100vh;
+    padding: 0;
+}
+
+
+.labs-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: calc(var(--space) * 1.5);
+}
+
+.labs-header .brand-k-icon {
+    position: absolute;
+    left: 0;
+    width: 48px;
+    height: auto;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.labs-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin: 0;
+    background: linear-gradient(90deg, #AE1521 0%, #FF873C 33%, #475B52 66%, #102A2E 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.labs-header .brand-k-icon:hover {
+    transform: scale(1.05);
+    opacity: 1;
+}
+
+.labs-header .brand-k-icon:hover path {
+    fill: url(#k-gradient) !important;
+}
+
+.overlay.lab-doors-screen .overlay-header .brand-k-icon svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.overlay.lab-doors-screen .overlay-header .brand-k-icon path {
+    fill: currentColor; 
 }
 .overlay-header { padding: var(--overlay-padding); padding-top: 0; padding-left: 0; padding-right: 0; }
 .overlay-header .header-row { display: flex; align-items: center; justify-content: space-between; }
 .overlay-header .left { display: flex; align-items: center; gap: 12px; }
 .overlay-header .logo { margin: 0; }
 .overlay-header .guidance { margin: 0; color: #fff; font-weight: 500; letter-spacing: 0.02em; }
-.overlay.lab-doors-screen .doors-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space); height: 100%; padding-bottom: var(--overlay-padding); box-sizing: border-box; }
+.overlay.lab-doors-screen h1 { color: #000; }
+.overlay.lab-doors-screen .overlay-header .guidance { color: #000; }
+.overlay.lab-doors-screen .ghost-btn.overlay-close { color: #fff; }
+.overlay.lab-doors-screen .ghost-btn.overlay-close:hover { color: #000; }
+.doors-grid { 
+    display: flex;
+    gap: var(--door-gap, 20px); 
+    width: 100%;
+    height: 100%;
+    padding: var(--space);
+    box-sizing: border-box;
+}
+.doors-grid .door { flex: 1 1 0; min-width: 0; }
+.doors-grid:hover .door:not(:hover) { flex-grow: 0.95; }
+.doors-grid .door:hover { flex-grow: 1.15; }
 .overlay.lab-doors-screen .door {
-    
     height: calc(100vh - (var(--space) * 2));
     border: none; 
+    border-radius: 0 !important;
+    box-shadow: 0 0 0 1px #3a3a3a;
+    transition: box-shadow 180ms ease, background 200ms ease, color 160ms ease, transform 180ms ease, flex-grow 240ms ease;
 }
 
 
@@ -714,9 +770,30 @@ body.transitioning .lab-doors-screen { pointer-events: none; }
 .overlay .screen-header { border-bottom: 1px solid #1a1a1a; }
 .overlay .ghost-btn.overlay-close { border-color: transparent; }
 
-.overlay.lab-doors-screen .door { position: relative; display: block; overflow: hidden; height: 100%; }
-.door .door-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); transform: scale(1); transition: transform 220ms cubic-bezier(0.2, 0.6, 0.2, 1), filter 220ms ease; }
-.overlay.lab-doors-screen .door:hover { box-shadow: none !important; }
-.overlay.lab-doors-screen .door::before,
-.overlay.lab-doors-screen .door:hover::before { content: none !important; }
+.door { 
+    position: relative; 
+    display: block; 
+    overflow: hidden; 
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.door:hover {
+    transform: translateY(-4px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32), 0 8px 32px rgba(255, 255, 255, 0.1);
+}
+.door .door-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.8) brightness(1.1); transform: scale(1); transition: transform 220ms cubic-bezier(0.2, 0.6, 0.2, 1), filter 220ms ease; }
+
 .door:hover .door-cover { filter: none; transform: scale(1.06); }
+
+
+.overlay.lab-doors-screen .logo {
+    background: linear-gradient(90deg, #AE1521 0%, #FF873C 33%, #475B52 66%, #102A2E 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+            color: transparent;
+}

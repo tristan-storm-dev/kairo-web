@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kairo — Drum &amp; Bass Lab</title>
-    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/dnb.css" />
 </head>
 <body>
     <section class="screen">
@@ -22,6 +23,8 @@
                 <span class="prompt-part" id="prompt-preview-subgenre">Style</span>
                 <span class="prompt-arrow" id="arrow-2" style="display: none;">></span>
                 <span class="prompt-part" id="prompt-preview-vibe">Vibe</span>
+                <span class="prompt-arrow" id="arrow-3" style="display: none;">></span>
+                <span class="prompt-part" id="prompt-preview-layer">Layer</span>
             </div>
 
             <div class="step" id="step-2-subgenre" style="display: none;">
@@ -32,6 +35,11 @@
             <div class="step" id="step-3-vibe" style="display: none;">
                 <h2>Choose a Vibe</h2>
                 <div class="grid-container" id="vibe-grid"></div>
+            </div>
+
+            <div class="step" id="step-4-layer" style="display: none;">
+                <h2>Test Layer</h2>
+                <div class="grid-container" id="layer-grid"></div>
             </div>
 
             <button id="generate-button" class="generate-btn" style="display: none;">

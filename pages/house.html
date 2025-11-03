@@ -4,41 +4,122 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kairo — House Lab</title>
-    <link rel="stylesheet" href="../style.css" />
-</head>
+    <link rel="stylesheet" href="../css/base.css" />
+    <link rel="stylesheet" href="../css/house.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    </head>
 <body>
-    <section class="screen">
-        <div class="container">
-            <header class="screen-header">
-                <h1 id="genre-lab-title">House Lab</h1>
-                <a href="home.html" class="ghost-btn">Home</a>
-            </header>
-
-            <div id="status-message">Ready?</div>
-
-            <div class="prompt-preview-container">
-                <span class="prompt-part" id="prompt-preview-genre">Genre</span>
-                <span class="prompt-arrow" id="arrow-1" style="display: none;">></span>
-                <span class="prompt-part" id="prompt-preview-subgenre">Style</span>
-                <span class="prompt-arrow" id="arrow-2" style="display: none;">></span>
-                <span class="prompt-part" id="prompt-preview-vibe">Vibe</span>
+    <section class="screen full-deck">
+        <div class="container deck-container-root">
+        
+            <div class="deck-top">
+                <div class="top-side left">
+                    <div class="cover-box">
+                        <img src="../assets/covers/house-cover.png" alt="House Lab cover" />
+                    </div>
+                    <div class="lab-details">
+                        <div class="lab-title">The House Lab</div>
+                        <div class="lab-sub">Virtual Deck Interface</div>
+                    </div>
+                </div>
+                <div class="top-center">
+                    <div class="track-view" id="track-view">
+                        <div class="track-screen" id="track-screen">
+                            <div class="bevel-rim"></div>
+                             <div class="inset-well"></div>
+                            <div class="led-screen">
+                                <svg class="led-bars" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
+                                    <defs>
+                                        <filter id="led-glow">
+                                            <feGaussianBlur stdDeviation="4" result="blur" />
+                                            <feMerge>
+                                                <feMergeNode in="blur" />
+                                                <feMergeNode in="SourceGraphic" />
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+            
+                                    <g class="bars-glow" filter="url(#led-glow)" opacity="0.45"></g>
+                                    <g class="bars-crisp"></g>
+                                    </svg>
+                            </div>
+            
+                            <div class="track-text" id="track-text" aria-live="polite">Ready</div>
+            
+                            <div id="audio-container"></div>
+                            </div>
+                            <div class="screen-glow"></div>
+                            <div class="grain-overlay-screen"></div>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
 
-            <div class="step" id="step-2-subgenre" style="display: none;">
-                <h2>Choose a Style</h2>
-                <div class="grid-container" id="subgenre-grid"></div>
+            <div id="status-message" class="visually-hidden">Draw your music!</div>
+
+            <div class="dj-decks">
+                <div class="deck-container deck-left">
+                    <h2 class="deck-title">Vibe Deck</h2>
+                    <div class="platter">
+                        <canvas id="vibe-canvas" width="420" height="420" aria-label="Draw your vibe"></canvas>
+                    </div>
+                    <div class="deck-controls">
+                        <button class="icon-btn reset-btn" id="reset-vibe" title="Reset drawing" aria-label="Reset drawing">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 4v6h6"/>
+                                <path d="M20 20v-6h-6"/>
+                                <path d="M5 12a7 7 0 0 1 12-5"/>
+                                <path d="M19 12a7 7 0 0 1-12 5"/>
+                            </svg>
+                        </button>
+                        <div class="deck-status status-ready" id="vibe-status">Ready</div>
+                    </div>
+                </div>
+
+                <div class="mixer-center">
+                    <div class="mixer">
+                        <div class="meter left" aria-hidden="true"></div>
+                        <div class="faders">
+                            <div class="fader"></div>
+                            <div class="fader"></div>
+                            <div class="fader cross"></div>
+                        </div>
+                        <div class="center-controls">
+                            <div class="vibe-prompt-display" id="display-vibe">?</div>
+                            <div class="style-prompt-display" id="display-style">?</div>
+                        <div id="layer-switch">
+                            <button class="layer-btn active" id="layer-slow" data-value="Slow" aria-label="Slow layer">Slow</button>
+                            <button class="layer-btn" id="layer-fast" data-value="Fast" aria-label="Fast layer">Fast</button>
+                        </div>
+                            <button class="generate-btn" id="generate-button" title="Generate Track" aria-label="Generate Track">
+                                <img src="../assets/logo/K.svg" alt="Generate" />
+                            </button>
+                            <div class="generate-screen" id="generate-status" aria-live="polite">Ready</div>
+                        </div>
+                        <div class="meter right" aria-hidden="true"></div>
+                    </div>
+                </div>
+
+                <div class="deck-container deck-right">
+                    <h2 class="deck-title">Style Deck</h2>
+                    <div class="platter">
+                        <canvas id="style-canvas" width="420" height="420" aria-label="Draw your style"></canvas>
+                    </div>
+                    <div class="deck-controls">
+                        <button class="icon-btn reset-btn" id="reset-style" title="Reset drawing" aria-label="Reset drawing">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 4v6h6"/>
+                                <path d="M20 20v-6h-6"/>
+                                <path d="M5 12a7 7 0 0 1 12-5"/>
+                                <path d="M19 12a7 7 0 0 1-12 5"/>
+                            </svg>
+                        </button>
+                        <div class="deck-status status-ready" id="style-status">Ready</div>
+                    </div>
+                </div>
             </div>
-
-            <div class="step" id="step-3-vibe" style="display: none;">
-                <h2>Choose a Vibe</h2>
-                <div class="grid-container" id="vibe-grid"></div>
-            </div>
-
-            <button id="generate-button" class="generate-btn" style="display: none;">
-                <span class="generate-btn-text">Generate</span>
-            </button>
-
-            <div id="audio-container"></div>
         </div>
     </section>
     <script src="../script.js"></script>
