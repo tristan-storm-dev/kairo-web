@@ -135,6 +135,33 @@ h2 {
 #audio-container { width: 100%; }
 audio { width: 100%; margin-top: 10px; }
 
+
+#audio-container .audio-player {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    background: #0b0b0b;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), inset 0 -8px 16px rgba(0,0,0,0.6);
+}
+
+#audio-container .audio-player audio {
+    width: 100%;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    opacity: 0.96;
+}
+
+
+audio::-webkit-media-controls-panel { background: #0f0f0f; }
+audio::-webkit-media-controls-play-button { filter: invert(1) brightness(1.1); }
+audio::-webkit-media-controls-mute-button { filter: invert(1) brightness(1.1); }
+audio::-webkit-media-controls-timeline { background: #111; border-radius: 12px; }
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display { color: #cfe8d6; }
+audio::-webkit-media-controls-volume-slider { background: #111; border-radius: 12px; }
+
 @keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 600px) {

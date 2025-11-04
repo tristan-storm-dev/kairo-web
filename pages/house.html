@@ -8,11 +8,45 @@
     <link rel="stylesheet" href="../css/house.css" />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+      html, body { height: 100%; overflow: hidden; }
+      .screen.full-deck { padding: 0; position: static; background: transparent !important; }
+      .screen.full-deck .container { padding: 0; min-height: 100vh; background: transparent !important; display: block; box-sizing: border-box; overflow: hidden; }
+      .deck-container-root { display: block; min-height: 100vh; }
+      .deck-top {
+        margin-bottom: 0;
+        height: auto !important;
+        overflow: hidden;
+        flex: 0 0 auto;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .top-center { height: auto; }
+      .top-center .track-view, .track-screen { height: 56px !important; min-height: 56px !important; }
+      @media (max-width: 900px) {
+        .top-center .track-view, .track-screen { height: 52px !important; min-height: 52px !important; }
+      }
+      .dj-decks { height: auto !important; align-self: stretch !important; padding-bottom: 0; margin-top: 0 !important; min-height: 0; box-sizing: border-box; }
+      .mixer-center, .mixer, .deck-container { height: auto; }
+      /* Remove child resets so the board keeps its internal padding */
+
+      /* Debug colors removed */
+      .deck-container { box-sizing: border-box; }
+      .track-screen { box-sizing: border-box; }
+      /* Hide additional overlays that may tint or shadow the screen */
+      .led-screen, .bevel-rim, .inset-well { display: none !important; }
+      /* Temporarily disable overlays that may tint the center area grey */
+      .screen-glow, .grain-overlay-screen { display: none !important; }
+    </style>
     </head>
 <body>
     <section class="screen full-deck">
         <div class="container deck-container-root">
         
+            <div class="dj-board">
             <div class="deck-top">
                 <div class="top-side left">
                     <div class="cover-box">
@@ -46,24 +80,53 @@
                             </div>
             
                             <div class="track-text" id="track-text" aria-live="polite">Ready</div>
-            
+                            <button class="track-pp-btn" id="track-pp-button" aria-label="Play" title="Play" disabled>
+                                <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8 5l12 7-12 7V5z" fill="currentColor"></path>
+                                </svg>
+                                <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"></path>
+                                </svg>
+                            </button>
+
                             <div id="audio-container"></div>
                             </div>
                             <div class="screen-glow"></div>
                             <div class="grain-overlay-screen"></div>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-
-            <div id="status-message" class="visually-hidden">Draw your music!</div>
+                       </div>
+                   </div>
+                   <div class="control-box" aria-label="Quick Controls">
+                       <div class="nav-grid">
+                           <button class="nav-btn" id="btn-home" aria-label="Go to Home">Home</button>
+                           <button class="nav-btn" id="btn-labs" aria-label="Go to Labs">Labs</button>
+                           <button class="nav-btn" id="btn-download" aria-label="Download Track">Download</button>
+                           <button class="nav-btn" id="btn-help" aria-label="Help">Help</button>
+                       </div>
+                   </div>
+               </div>
 
             <div class="dj-decks">
-                <div class="deck-container deck-left">
-                    <h2 class="deck-title">Vibe Deck</h2>
+               <div class="deck-container deck-left">
+                   <div class="deck-header-line">
+                     <h2 class="deck-title">Vibe Deck</h2>
+                     <button class="icon-btn help-btn" id="help-vibe" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-vibe">?</button>
+                     <div class="deck-help-pop" id="help-pop-vibe" role="dialog" aria-hidden="true">
+                       <div class="help-title">Vibe Help</div>
+                       <div class="help-text">Draw in the canvas to give your track a vibe. Pick a pad color, sketch lines and shapes—then we analyze it to set the vibe. Tap the K to generate.</div>
+                     </div>
+                   </div>
                     <div class="platter">
                         <canvas id="vibe-canvas" width="420" height="420" aria-label="Draw your vibe"></canvas>
+                    </div>
+                    <div class="pad-grid" id="vibe-pads" aria-label="Vibe deck color pads">
+                        <button class="pad" style="--pad-color:#ffffff" data-color="#ffffff" aria-label="White"></button>
+                        <button class="pad" style="--pad-color:#ff3b3b" data-color="#ff3b3b" aria-label="Red"></button>
+                        <button class="pad" style="--pad-color:#ff873c" data-color="#ff873c" aria-label="Orange"></button>
+                        <button class="pad" style="--pad-color:#ffea3c" data-color="#ffea3c" aria-label="Yellow"></button>
+                        <button class="pad" style="--pad-color:#00e060" data-color="#00e060" aria-label="Green"></button>
+                        <button class="pad" style="--pad-color:#3cf2ff" data-color="#3cf2ff" aria-label="Cyan"></button>
+                        <button class="pad" style="--pad-color:#3c78ff" data-color="#3c78ff" aria-label="Blue"></button>
+                        <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
                     </div>
                     <div class="deck-controls">
                         <button class="icon-btn reset-btn" id="reset-vibe" title="Reset drawing" aria-label="Reset drawing">
@@ -87,25 +150,68 @@
                             <div class="fader cross"></div>
                         </div>
                         <div class="center-controls">
-                            <div class="vibe-prompt-display" id="display-vibe">?</div>
-                            <div class="style-prompt-display" id="display-style">?</div>
-                        <div id="layer-switch">
-                            <button class="layer-btn active" id="layer-slow" data-value="Slow" aria-label="Slow layer">Slow</button>
-                            <button class="layer-btn" id="layer-fast" data-value="Fast" aria-label="Fast layer">Fast</button>
-                        </div>
+                            <div class="switch-row">
+                                <div id="layer-switch" role="tablist" aria-label="Layer switch">
+                                    <button class="layer-btn active" id="layer-slow" data-value="Slow" aria-selected="true" aria-controls="layer-slow-panel">Slow</button>
+                                    <button class="layer-btn" id="layer-fast" data-value="Fast" aria-selected="false" aria-controls="layer-fast-panel">Fast</button>
+                                </div>
+                            </div>
+                            <div class="prompt-stack">
+                                <div class="prompt-bar vibe">
+                                    <div class="prompt-label">Vibe Deck</div>
+                                    <div class="prompt-value" id="display-vibe">?</div>
+                                </div>
+                                <div class="prompt-bar style">
+                                    <div class="prompt-label">Style Deck</div>
+                                    <div class="prompt-value" id="display-style">?</div>
+                                </div>
+                            </div>
+                            <div class="control-decor" aria-hidden="true">
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                            </div>
+                            <div class="generate-screen" id="generate-status" aria-live="polite">Ready</div>
                             <button class="generate-btn" id="generate-button" title="Generate Track" aria-label="Generate Track">
                                 <img src="../assets/logo/K.svg" alt="Generate" />
                             </button>
-                            <div class="generate-screen" id="generate-status" aria-live="polite">Ready</div>
-                        </div>
+                            
+                            </div>
                         <div class="meter right" aria-hidden="true"></div>
+                        
+                        <div class="brand-footer" aria-hidden="true">
+                            <div class="brand-logo">
+                                <img class="brand-k" src="../assets/logo/K.svg" alt="" />
+                                <img class="brand-airo" src="../assets/logo/AIRO.svg" alt="KAIRO" />
+                            </div>
+                            <div class="brand-tag">Powered by Tristan Storm</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="deck-container deck-right">
-                    <h2 class="deck-title">Style Deck</h2>
+                    <div class="deck-header-line">
+                      <h2 class="deck-title">Style Deck</h2>
+                      <button class="icon-btn help-btn" id="help-style" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-style">?</button>
+                      <div class="deck-help-pop" id="help-pop-style" role="dialog" aria-hidden="true">
+                        <div class="help-title">Style Help</div>
+                        <div class="help-text">Draw in the canvas to shape your track’s style. Choose a pad color, sketch freely—your drawing guides the style. Tap the K to generate.</div>
+                      </div>
+                    </div>
                     <div class="platter">
                         <canvas id="style-canvas" width="420" height="420" aria-label="Draw your style"></canvas>
+                    </div>
+                    <div class="pad-grid" id="style-pads" aria-label="Style deck color pads">
+                        <button class="pad" style="--pad-color:#ffffff" data-color="#ffffff" aria-label="White"></button>
+                        <button class="pad" style="--pad-color:#ff3b3b" data-color="#ff3b3b" aria-label="Red"></button>
+                        <button class="pad" style="--pad-color:#ff873c" data-color="#ff873c" aria-label="Orange"></button>
+                        <button class="pad" style="--pad-color:#ffea3c" data-color="#ffea3c" aria-label="Yellow"></button>
+                        <button class="pad" style="--pad-color:#00e060" data-color="#00e060" aria-label="Green"></button>
+                        <button class="pad" style="--pad-color:#3cf2ff" data-color="#3cf2ff" aria-label="Cyan"></button>
+                        <button class="pad" style="--pad-color:#3c78ff" data-color="#3c78ff" aria-label="Blue"></button>
+                        <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
                     </div>
                     <div class="deck-controls">
                         <button class="icon-btn reset-btn" id="reset-style" title="Reset drawing" aria-label="Reset drawing">
@@ -120,8 +226,10 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
     </section>
+    <div id="status-message" class="visually-hidden">Draw your music!</div>
     <script src="../script.js"></script>
 </body>
 </html>
