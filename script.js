@@ -96,7 +96,96 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    function normalizeKeyword(raw, allowed) {
+    // Map backend/local analysis words to per-genre allowed single-word tokens
+    const genreSynonyms = {
+        'Techno': {
+            vibe: {
+                'dark': 'dark',
+                'energetic': 'driving',
+                'calm': 'minimal',
+                'futuristic': 'industrial',
+                'mysterious': 'warehouse',
+                'euphoric': 'melodic'
+            },
+            style: {
+                'progressive': 'peak',
+                'afro': 'dub',
+                'funky': 'raw',
+                'deep': 'deep',
+                'melodic': 'melodic'
+            }
+        },
+        'House': {
+            vibe: {
+                'dark': 'deep',
+                'energetic': 'uplifting',
+                'calm': 'soulful',
+                'futuristic': 'classic',
+                'mysterious': 'deep',
+                'euphoric': 'uplifting'
+            },
+            style: {
+                'progressive': 'progressive',
+                'afro': 'jackin',
+                'funky': 'disco',
+                'deep': 'minimal',
+                'melodic': 'progressive'
+            }
+        },
+        'Hip Hop': {
+            vibe: {
+                'dark': 'gritty',
+                'energetic': 'trap',
+                'calm': 'lofi',
+                'futuristic': 'modern',
+                'mysterious': 'underground',
+                'euphoric': 'jazzy'
+            },
+            style: {
+                'progressive': 'modern',
+                'afro': 'westcoast',
+                'funky': 'golden',
+                'deep': 'underground',
+                'melodic': 'golden'
+            }
+        },
+        'Ambient': {
+            vibe: {
+                'dark': 'drone',
+                'energetic': 'cinematic',
+                'calm': 'soothing',
+                'futuristic': 'ethereal',
+                'mysterious': 'ethereal',
+                'euphoric': 'lush'
+            },
+            style: {
+                'progressive': 'space',
+                'afro': 'organic',
+                'funky': 'organic',
+                'deep': 'minimal',
+                'melodic': 'textural'
+            }
+        },
+        'Drum & Bass': {
+            vibe: {
+                'dark': 'dark',
+                'energetic': 'roller',
+                'calm': 'liquid',
+                'futuristic': 'neuro',
+                'mysterious': 'deep',
+                'euphoric': 'atmospheric'
+            },
+            style: {
+                'progressive': 'modern',
+                'afro': 'jungle',
+                'funky': 'jungle',
+                'deep': 'minimal',
+                'melodic': 'classic'
+            }
+        }
+    };
+
+    function normalizeKeyword(raw, allowed, synonymsMap) {
         const fallback = allowed && allowed.length ? allowed[0] : '';
         if (!raw) return fallback;
         const t = raw.toString().toLowerCase().replace(/[^a-z0-9]/g, ' ')
@@ -104,6 +193,23 @@ document.addEventListener("DOMContentLoaded", () => {
         
         for (const w of t) {
             if (allowed.includes(w)) return w;
+        }
+        // direct synonym mapping
+        if (synonymsMap) {
+            for (const w of t) {
+                const mapped = synonymsMap[w];
+                if (mapped && allowed.includes(mapped)) return mapped;
+            }
+            // fuzzy synonym keys
+            const keys = Object.keys(synonymsMap);
+            for (const key of keys) {
+                for (const w of t) {
+                    if (w.includes(key) || key.includes(w)) {
+                        const mapped = synonymsMap[key];
+                        if (mapped && allowed.includes(mapped)) return mapped;
+                    }
+                }
+            }
         }
         
         let best = fallback;
@@ -308,12 +414,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             
             if (featureType === 'style') {
-                const normalized = normalizeKeyword(prompt, vocab.style);
+                const normalized = normalizeKeyword(prompt, vocab.style, (genreSynonyms[selectedGenre]||{}).style);
                 selectedSubGenre = normalized;
                 displayStyle.textContent = normalized;
                 if (previewElement) previewElement.textContent = normalized;
             } else if (featureType === 'vibe') {
-                const normalized = normalizeKeyword(prompt, vocab.vibe);
+                const normalized = normalizeKeyword(prompt, vocab.vibe, (genreSynonyms[selectedGenre]||{}).vibe);
                 selectedVibe = normalized;
                 displayVibe.textContent = normalized;
                 if (previewElement) previewElement.textContent = normalized;
@@ -371,8 +477,8 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const genreToken = (genreTokens[selectedGenre] || 'house');
         const vocab = genreVocab[selectedGenre] || { vibe: [], style: [] };
-        const vibeToken = normalizeKeyword(selectedVibe, vocab.vibe);
-        const styleToken = normalizeKeyword(selectedSubGenre, vocab.style);
+        const vibeToken = normalizeKeyword(selectedVibe, vocab.vibe, (genreSynonyms[selectedGenre]||{}).vibe);
+        const styleToken = normalizeKeyword(selectedSubGenre, vocab.style, (genreSynonyms[selectedGenre]||{}).style);
         const layerToken = (selectedLayer || 'Slow').toString().toLowerCase();
         const promptText = `${genreToken} ${vibeToken} ${styleToken} ${layerToken}`;
 
