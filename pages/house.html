@@ -29,90 +29,54 @@
       @media (max-width: 900px) {
         .top-center .track-view, .track-screen { height: 52px !important; min-height: 52px !important; }
       }
-      .dj-decks { height: auto !important; align-self: stretch !important; padding-bottom: 0; margin-top: 0 !important; min-height: 0; box-sizing: border-box; }
-      .mixer-center, .mixer, .deck-container { height: auto; }
-      /* Remove child resets so the board keeps its internal padding */
-
-      /* Debug colors removed */
-      .deck-container { box-sizing: border-box; }
-      .track-screen { box-sizing: border-box; }
-      /* Hide additional overlays that may tint or shadow the screen */
-      .led-screen, .bevel-rim, .inset-well { display: none !important; }
-      /* Temporarily disable overlays that may tint the center area grey */
-      .screen-glow, .grain-overlay-screen { display: none !important; }
     </style>
-    </head>
-<body>
-    <section class="screen full-deck">
-        <div class="container deck-container-root">
-        
-            <div class="dj-board">
-            <div class="deck-top">
-                <div class="top-side left">
-                    <div class="cover-box">
-                        <img src="../assets/covers/house-cover.png" alt="House Lab cover" />
-                    </div>
-                    <div class="lab-details">
-                        <div class="lab-title">The House Lab</div>
-                        <div class="lab-sub">Virtual Deck Interface</div>
-                    </div>
-                </div>
-                <div class="top-center">
-                    <div class="track-view" id="track-view">
-                        <div class="track-screen" id="track-screen">
-                            <div class="bevel-rim"></div>
-                             <div class="inset-well"></div>
-                            <div class="led-screen">
-                                <svg class="led-bars" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
-                                    <defs>
-                                        <filter id="led-glow">
-                                            <feGaussianBlur stdDeviation="4" result="blur" />
-                                            <feMerge>
-                                                <feMergeNode in="blur" />
-                                                <feMergeNode in="SourceGraphic" />
-                                            </feMerge>
-                                        </filter>
-                                    </defs>
-            
-                                    <g class="bars-glow" filter="url(#led-glow)" opacity="0.45"></g>
-                                    <g class="bars-crisp"></g>
-                                    </svg>
-                            </div>
-            
-                            <div class="track-text" id="track-text" aria-live="polite">Ready</div>
-                            <button class="track-pp-btn" id="track-pp-button" aria-label="Play" title="Play" disabled>
-                                <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M8 5l12 7-12 7V5z" fill="currentColor"></path>
-                                </svg>
-                                <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"></path>
-                                </svg>
-                            </button>
+</head>
+<body class="app-white">
+  <main class="app-frame" role="main" aria-label="House Lab">
+    <div class="top-bar" role="navigation" aria-label="House Lab Header">
+      <div class="bar-left">
+        <div class="cover-box">
+          <img src="../assets/covers/house-cover.png" alt="House Lab cover" />
+        </div>
+        <div class="lab-details">
+          <h2 class="k-h2 lab-title">House Lab</h2>
+        </div>
+      </div>
+      <div class="bar-center">
+        <div class="track-view" id="track-view" style="width:100%; max-width:720px;">
+          <div class="track-screen" id="track-screen">
+            <p class="track-text k-body" id="track-text" aria-live="polite">Ready</p>
+            <button class="track-pp-btn" id="track-pp-button" aria-label="Play" title="Play" aria-hidden="true" disabled>
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5l12 7-12 7V5z" fill="currentColor"></path>
+              </svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"></path>
+              </svg>
+            </button>
+            <div id="audio-container"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bar-right">
+        <a class="primary-btn cta-explore" href="home.html" aria-label="Go to Home"><span class="cta-label">home</span></a>
+        <a class="primary-btn cta-explore" href="labs.html" aria-label="Go to Labs"><span class="cta-label">labs</span></a>
+        <button class="primary-btn cta-explore" id="btn-download" aria-label="Download Track"><span class="cta-label">download</span></button>
+        <button class="primary-btn cta-explore" id="btn-help" aria-label="Help"><span class="cta-label">help</span></button>
+      </div>
+    </div>
 
-                            <div id="audio-container"></div>
-                            </div>
-                            <div class="screen-glow"></div>
-                            <div class="grain-overlay-screen"></div>
-                       </div>
-                   </div>
-                   <div class="control-box" aria-label="Quick Controls">
-                       <div class="nav-grid">
-                           <button class="nav-btn" id="btn-home" aria-label="Go to Home">Home</button>
-                           <button class="nav-btn" id="btn-labs" aria-label="Go to Labs">Labs</button>
-                           <button class="nav-btn" id="btn-download" aria-label="Download Track">Download</button>
-                           <button class="nav-btn" id="btn-help" aria-label="Help">Help</button>
-                       </div>
-                   </div>
-               </div>
-
-            <div class="dj-decks">
-               <div class="deck-container deck-left">
-                   <div class="deck-header-line">
-                     <h2 class="deck-title">Vibe Deck</h2>
-                     <button class="icon-btn help-btn" id="help-vibe" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-vibe">?</button>
-                     <div class="deck-help-pop" id="help-pop-vibe" role="dialog" aria-hidden="true">
+    <div class="frame-media">
+      <div class="board-frame">
+        <div class="dj-board">
+          <div class="dj-decks">
+                <div class="deck-container deck-left">
+                    <div class="deck-header-line">
+                      <h2 class="deck-title">Vibe Deck</h2>
+                      <button class="icon-btn help-btn" id="help-vibe" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-vibe">?</button>
+                      <div class="deck-help-pop" id="help-pop-vibe" role="dialog" aria-hidden="true">
                        <div class="help-title">Vibe Help</div>
-                       <div class="help-text">Draw in the canvas to give your track a vibe. Pick a pad color, sketch lines and shapes—then we analyze it to set the vibe. Tap the K to generate.</div>
+                       <div class="help-text">Draw in the canvas to give your house track a vibe. Pick a pad color, sketch lines and shapes—then we analyze it to set the vibe. Tap the star to generate.</div>
                      </div>
                    </div>
                     <div class="platter">
@@ -129,18 +93,35 @@
                         <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
                     </div>
                     <div class="deck-controls">
-                        <button class="icon-btn reset-btn" id="reset-vibe" title="Reset drawing" aria-label="Reset drawing">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 4v6h6"/>
-                                <path d="M20 20v-6h-6"/>
-                                <path d="M5 12a7 7 0 0 1 12-5"/>
-                                <path d="M19 12a7 7 0 0 1-12 5"/>
+                        <button class="icon-btn reset-btn" id="reset-vibe" title="Delete drawing" aria-label="Delete drawing">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M6 6l1 14h10l1-14" />
+                                <path d="M10 10v8" />
+                                <path d="M14 10v8" />
                             </svg>
                         </button>
                         <div class="deck-status status-ready" id="vibe-status">Ready</div>
                     </div>
                 </div>
-
+                
+                <div class="mixer-panel panel-left" aria-label="Left volume panel">
+                  <div class="vu-bars" aria-hidden="true">
+                    <div class="bar b1"></div>
+                    <div class="bar b2"></div>
+                    <div class="bar b3"></div>
+                    <div class="bar b4"></div>
+                    <div class="bar b5"></div>
+                    <div class="bar b6"></div>
+                    <div class="bar b7"></div>
+                    <div class="bar b8"></div>
+                    <div class="bar b9"></div>
+                    <div class="bar b10"></div>
+                    <div class="bar b11"></div>
+                    <div class="bar b12"></div>
+                  </div>
+                </div>
                 <div class="mixer-center">
                     <div class="mixer">
                         <div class="meter left" aria-hidden="true"></div>
@@ -175,7 +156,7 @@
                             </div>
                             <div class="generate-screen" id="generate-status" aria-live="polite">Ready</div>
                             <button class="generate-btn" id="generate-button" title="Generate Track" aria-label="Generate Track">
-                                <img src="../assets/logo/K.svg" alt="Generate" />
+                                <img src="../assets/icons/star.svg" class="generate-icon" alt="Generate" />
                             </button>
                             
                             </div>
@@ -183,27 +164,44 @@
                         
                         <div class="brand-footer" aria-hidden="true">
                             <div class="brand-logo">
-                                <img class="brand-k" src="../assets/logo/K.svg" alt="" />
-                                <img class="brand-airo" src="../assets/logo/AIRO.svg" alt="KAIRO" />
+                                <span class="brand-k">K</span>
+                                <span class="brand-airo">airo</span>
                             </div>
-                            <div class="brand-tag">Powered by Tristan Storm</div>
+                            <div class="brand-tag">Powered by Kairo</div>
                         </div>
                     </div>
                 </div>
 
+                
+                <div class="mixer-panel panel-right" aria-label="Right volume panel">
+                  <div class="vu-bars" aria-hidden="true">
+                    <div class="bar b1"></div>
+                    <div class="bar b2"></div>
+                    <div class="bar b3"></div>
+                    <div class="bar b4"></div>
+                    <div class="bar b5"></div>
+                    <div class="bar b6"></div>
+                    <div class="bar b7"></div>
+                    <div class="bar b8"></div>
+                    <div class="bar b9"></div>
+                    <div class="bar b10"></div>
+                    <div class="bar b11"></div>
+                    <div class="bar b12"></div>
+                  </div>
+                </div>
                 <div class="deck-container deck-right">
                     <div class="deck-header-line">
                       <h2 class="deck-title">Style Deck</h2>
                       <button class="icon-btn help-btn" id="help-style" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-style">?</button>
                       <div class="deck-help-pop" id="help-pop-style" role="dialog" aria-hidden="true">
                         <div class="help-title">Style Help</div>
-                        <div class="help-text">Draw in the canvas to shape your track’s style. Choose a pad color, sketch freely—your drawing guides the style. Tap the K to generate.</div>
+                        <div class="help-text">Draw in the canvas to shape your house track’s style. Choose a pad color, sketch freely—your drawing guides the style. Tap the star to generate.</div>
                       </div>
                     </div>
                     <div class="platter">
                         <canvas id="style-canvas" width="420" height="420" aria-label="Draw your style"></canvas>
                     </div>
-                    <div class="pad-grid" id="style-pads" aria-label="Style deck color pads">
+                    <div class="pad-grid" id="style-pads" aria-label="Style deck pattern pads">
                         <button class="pad" style="--pad-color:#ffffff" data-color="#ffffff" aria-label="White"></button>
                         <button class="pad" style="--pad-color:#ff3b3b" data-color="#ff3b3b" aria-label="Red"></button>
                         <button class="pad" style="--pad-color:#ff873c" data-color="#ff873c" aria-label="Orange"></button>
@@ -214,22 +212,25 @@
                         <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
                     </div>
                     <div class="deck-controls">
-                        <button class="icon-btn reset-btn" id="reset-style" title="Reset drawing" aria-label="Reset drawing">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 4v6h6"/>
-                                <path d="M20 20v-6h-6"/>
-                                <path d="M5 12a7 7 0 0 1 12-5"/>
-                                <path d="M19 12a7 7 0 0 1-12 5"/>
+                        <button class="icon-btn reset-btn" id="reset-style" title="Delete pattern" aria-label="Delete pattern">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M6 6l1 14h10l1-14" />
+                                <path d="M10 10v8" />
+                                <path d="M14 10v8" />
                             </svg>
                         </button>
                         <div class="deck-status status-ready" id="style-status">Ready</div>
                     </div>
                 </div>
-            </div>
-            </div>
+          </div>
         </div>
-    </section>
-    <div id="status-message" class="visually-hidden">Draw your music!</div>
+      </div>
+    </div>
+  </main>
     <script src="../script.js"></script>
+    <script src="http://127.0.0.1:35729/livereload.js?snipver=1"></script>
+    <div id="status-message" class="visually-hidden">Draw your music!</div>
 </body>
 </html>

@@ -3,59 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kairo — House Lab</title>
+  <title>Kairo — Home</title>
 
   <link rel="stylesheet" href="../css/base.css" />
   <link rel="stylesheet" href="../css/home.css" />
-  <link rel="stylesheet" href="../css/labs.css" />
-  <link rel="stylesheet" href="../css/house-lab.css" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Raleway:wght@700&family=Anton&family=Russo+One&family=Cormorant+Garamond:wght@700&display=swap" rel="stylesheet">
 </head>
 
-<body>
-  <section class="screen full-deck">
-    <div class="deck-container-root">
-
-      <div class="deck-top">
-        <div class="top-side">
-          <div class="cover-box">
-            <img src="../assets/covers/house-cover.png" alt="House Cover">
-          </div>
-          <div>
-            <div class="lab-title">House Lab</div>
-            <div class="lab-sub">Kairo Audio</div>
-          </div>
-        </div>
-
-        <div class="top-center">
-          <div class="track-screen"></div>
-        </div>
+<body class="app-white">
+  <main class="app-frame" role="main" aria-label="Home">
+    <div class="top-bar" role="navigation" aria-label="Primary">
+      <div class="bar-left">
+        <a href="home.html" class="brand-title-link" aria-label="Kairo Home">
+          <div class="bar-title k-h2">kairo</div>
+        </a>
       </div>
-
-      <div class="dj-decks">
-        <div class="deck-container">
-          <div class="platter"></div>
-        </div>
-
-        <div class="mixer">
-          <div class="center-controls">
-            <div class="vibe-prompt-display">Vibe: Chill</div>
-            <div class="style-prompt-display">Style: Deep</div>
-            <button class="generate-btn">
-              <img src="../assets/logo/K.svg" alt="Kairo Logo">
-            </button>
-          </div>
-        </div>
-
-        <div class="deck-container">
-          <div class="platter"></div>
-        </div>
+      <div class="bar-right">
+        <p class="text-black-teal">
+          <a href="labs.html" class="brand-labs-link" aria-label="Open Labs">
+            <span class="bar-icon icon-star" aria-hidden="true"></span>
+          </a>
+        </p>
       </div>
-
     </div>
-  </section>
+    <div class="frame-media">
+      <video class="frame-video" src="../assets/home-video.mp4" autoplay loop muted playsinline preload="metadata"></video>
+      <div class="media-overlay">
+        <div class="overlay-card">
+          <div class="overlay-title-row">
+            <span class="inline-icon icon-star" aria-hidden="true"></span>
+            <h2 class="k-h2 text-white overlay-title">Welcome to Kairo</h2>
+          </div>
+          <p>turn chaos into sound, kairo helps artists overcome their creative blocks by giving them a platform to visualize their ideas and turn them into music using ai.</p>
+          <a class="primary-btn cta-explore" href="labs.html" aria-label="Go to Labs"><span class="cta-label">Explore Labs</span></a>
+        </div>
+      </div>
+    </div>
+  </main>
 </body>
 </html>

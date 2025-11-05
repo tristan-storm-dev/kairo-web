@@ -6,49 +6,231 @@
     <title>Kairo — Ambient Lab</title>
     <link rel="stylesheet" href="../css/base.css" />
     <link rel="stylesheet" href="../css/ambient.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+      html, body { height: 100%; overflow: hidden; }
+      .screen.full-deck { padding: 0; position: static; background: transparent !important; }
+      .screen.full-deck .container { padding: 0; min-height: 100vh; background: transparent !important; display: block; box-sizing: border-box; overflow: hidden; }
+      .deck-container-root { display: block; min-height: 100vh; }
+      .deck-top {
+        margin-bottom: 0;
+        height: auto !important;
+        overflow: hidden;
+        flex: 0 0 auto;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .top-center { height: auto; }
+      .top-center .track-view, .track-screen { height: 56px !important; min-height: 56px !important; }
+      @media (max-width: 900px) {
+        .top-center .track-view, .track-screen { height: 52px !important; min-height: 52px !important; }
+      }
+    </style>
 </head>
-<body>
-    <section class="screen">
-        <div class="container">
-            <header class="screen-header">
-                <h1 id="genre-lab-title">Ambient Lab</h1>
-                <a href="home.html" class="ghost-btn">Home</a>
-            </header>
-
-            <div id="status-message">Ready?</div>
-
-            <div class="prompt-preview-container">
-                <span class="prompt-part" id="prompt-preview-genre">Genre</span>
-                <span class="prompt-arrow" id="arrow-1" style="display: none;">></span>
-                <span class="prompt-part" id="prompt-preview-subgenre">Style</span>
-                <span class="prompt-arrow" id="arrow-2" style="display: none;">></span>
-                <span class="prompt-part" id="prompt-preview-vibe">Vibe</span>
-                <span class="prompt-arrow" id="arrow-3" style="display: none;">></span>
-                <span class="prompt-part" id="prompt-preview-layer">Layer</span>
-            </div>
-
-            <div class="step" id="step-2-subgenre" style="display: none;">
-                <h2>Choose a Style</h2>
-                <div class="grid-container" id="subgenre-grid"></div>
-            </div>
-
-            <div class="step" id="step-3-vibe" style="display: none;">
-                <h2>Choose a Vibe</h2>
-                <div class="grid-container" id="vibe-grid"></div>
-            </div>
-
-            <div class="step" id="step-4-layer" style="display: none;">
-                <h2>Test Layer</h2>
-                <div class="grid-container" id="layer-grid"></div>
-            </div>
-
-            <button id="generate-button" class="generate-btn" style="display: none;">
-                <span class="generate-btn-text">Generate</span>
-            </button>
-
-            <div id="audio-container"></div>
+<body class="app-white">
+  <main class="app-frame" role="main" aria-label="Ambient Lab">
+    <div class="top-bar" role="navigation" aria-label="Ambient Lab Header">
+      <div class="bar-left">
+        <div class="cover-box">
+          <img src="../assets/covers/ambient-cover.png" alt="Ambient Lab cover" />
         </div>
-    </section>
+        <div class="lab-details">
+          <h2 class="k-h2 lab-title">Ambient Lab</h2>
+        </div>
+      </div>
+      <div class="bar-center">
+        <div class="track-view" id="track-view" style="width:100%; max-width:720px;">
+          <div class="track-screen" id="track-screen">
+            <p class="track-text k-body" id="track-text" aria-live="polite">Ready</p>
+            <button class="track-pp-btn" id="track-pp-button" aria-label="Play" title="Play" aria-hidden="true" disabled>
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5l12 7-12 7V5z" fill="currentColor"></path>
+              </svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"></path>
+              </svg>
+            </button>
+            <div id="audio-container"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bar-right">
+        <a class="primary-btn cta-explore" href="home.html" aria-label="Go to Home"><span class="cta-label">home</span></a>
+        <a class="primary-btn cta-explore" href="labs.html" aria-label="Go to Labs"><span class="cta-label">labs</span></a>
+        <button class="primary-btn cta-explore" id="btn-download" aria-label="Download Track"><span class="cta-label">download</span></button>
+        <button class="primary-btn cta-explore" id="btn-help" aria-label="Help"><span class="cta-label">help</span></button>
+      </div>
+    </div>
+
+    <div class="frame-media">
+      <div class="board-frame">
+        <div class="dj-board">
+          <div class="dj-decks">
+                <div class="deck-container deck-left">
+                    <div class="deck-header-line">
+                      <h2 class="deck-title">Vibe Deck</h2>
+                      <button class="icon-btn help-btn" id="help-vibe" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-vibe">?</button>
+                      <div class="deck-help-pop" id="help-pop-vibe" role="dialog" aria-hidden="true">
+                       <div class="help-title">Vibe Help</div>
+                       <div class="help-text">Draw in the canvas to give your ambient track a vibe. Pick a pad color, sketch lines and shapes—then we analyze it to set the vibe. Tap the star to generate.</div>
+                     </div>
+                   </div>
+                    <div class="platter">
+                        <canvas id="vibe-canvas" width="420" height="420" aria-label="Draw your vibe"></canvas>
+                    </div>
+                    <div class="pad-grid" id="vibe-pads" aria-label="Vibe deck color pads">
+                        <button class="pad" style="--pad-color:#ffffff" data-color="#ffffff" aria-label="White"></button>
+                        <button class="pad" style="--pad-color:#ff3b3b" data-color="#ff3b3b" aria-label="Red"></button>
+                        <button class="pad" style="--pad-color:#ff873c" data-color="#ff873c" aria-label="Orange"></button>
+                        <button class="pad" style="--pad-color:#ffea3c" data-color="#ffea3c" aria-label="Yellow"></button>
+                        <button class="pad" style="--pad-color:#00e060" data-color="#00e060" aria-label="Green"></button>
+                        <button class="pad" style="--pad-color:#3cf2ff" data-color="#3cf2ff" aria-label="Cyan"></button>
+                        <button class="pad" style="--pad-color:#3c78ff" data-color="#3c78ff" aria-label="Blue"></button>
+                        <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
+                    </div>
+                    <div class="deck-controls">
+                        <button class="icon-btn reset-btn" id="reset-vibe" title="Delete drawing" aria-label="Delete drawing">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M6 6l1 14h10l1-14" />
+                                <path d="M10 10v8" />
+                                <path d="M14 10v8" />
+                            </svg>
+                        </button>
+                        <div class="deck-status status-ready" id="vibe-status">Ready</div>
+                    </div>
+                </div>
+                
+                <div class="mixer-panel panel-left" aria-label="Left volume panel">
+                  <div class="vu-bars" aria-hidden="true">
+                    <div class="bar b1"></div>
+                    <div class="bar b2"></div>
+                    <div class="bar b3"></div>
+                    <div class="bar b4"></div>
+                    <div class="bar b5"></div>
+                    <div class="bar b6"></div>
+                    <div class="bar b7"></div>
+                    <div class="bar b8"></div>
+                    <div class="bar b9"></div>
+                    <div class="bar b10"></div>
+                    <div class="bar b11"></div>
+                    <div class="bar b12"></div>
+                  </div>
+                </div>
+                <div class="mixer-center">
+                    <div class="mixer">
+                        <div class="meter left" aria-hidden="true"></div>
+                        <div class="faders">
+                            <div class="fader"></div>
+                            <div class="fader"></div>
+                            <div class="fader cross"></div>
+                        </div>
+                        <div class="center-controls">
+                            <div class="switch-row">
+                                <div id="layer-switch" role="tablist" aria-label="Layer switch">
+                                    <button class="layer-btn active" id="layer-slow" data-value="Slow" aria-selected="true" aria-controls="layer-slow-panel">Slow</button>
+                                    <button class="layer-btn" id="layer-fast" data-value="Fast" aria-selected="false" aria-controls="layer-fast-panel">Fast</button>
+                                </div>
+                            </div>
+                            <div class="prompt-stack">
+                                <div class="prompt-bar vibe">
+                                    <div class="prompt-label">Vibe Deck</div>
+                                    <div class="prompt-value" id="display-vibe">?</div>
+                                </div>
+                                <div class="prompt-bar style">
+                                    <div class="prompt-label">Style Deck</div>
+                                    <div class="prompt-value" id="display-style">?</div>
+                                </div>
+                            </div>
+                            <div class="control-decor" aria-hidden="true">
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                                <div class="decor knob"></div>
+                            </div>
+                            <div class="generate-screen" id="generate-status" aria-live="polite">Ready</div>
+                            <button class="generate-btn" id="generate-button" title="Generate Track" aria-label="Generate Track">
+                                <img src="../assets/icons/star.svg" class="generate-icon" alt="Generate" />
+                            </button>
+                            
+                            </div>
+                        <div class="meter right" aria-hidden="true"></div>
+                        
+                        <div class="brand-footer" aria-hidden="true">
+                            <div class="brand-logo">
+                                <span class="brand-k">K</span>
+                                <span class="brand-airo">airo</span>
+                            </div>
+                            <div class="brand-tag">Powered by Kairo</div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="mixer-panel panel-right" aria-label="Right volume panel">
+                  <div class="vu-bars" aria-hidden="true">
+                    <div class="bar b1"></div>
+                    <div class="bar b2"></div>
+                    <div class="bar b3"></div>
+                    <div class="bar b4"></div>
+                    <div class="bar b5"></div>
+                    <div class="bar b6"></div>
+                    <div class="bar b7"></div>
+                    <div class="bar b8"></div>
+                    <div class="bar b9"></div>
+                    <div class="bar b10"></div>
+                    <div class="bar b11"></div>
+                    <div class="bar b12"></div>
+                  </div>
+                </div>
+                <div class="deck-container deck-right">
+                    <div class="deck-header-line">
+                      <h2 class="deck-title">Style Deck</h2>
+                      <button class="icon-btn help-btn" id="help-style" title="Help" aria-label="Help" aria-expanded="false" aria-controls="help-pop-style">?</button>
+                      <div class="deck-help-pop" id="help-pop-style" role="dialog" aria-hidden="true">
+                        <div class="help-title">Style Help</div>
+                        <div class="help-text">Draw in the canvas to shape your ambient track’s style. Choose a pad color, sketch freely—your drawing guides the style. Tap the star to generate.</div>
+                      </div>
+                    </div>
+                    <div class="platter">
+                        <canvas id="style-canvas" width="420" height="420" aria-label="Draw your style"></canvas>
+                    </div>
+                    <div class="pad-grid" id="style-pads" aria-label="Style deck pattern pads">
+                        <button class="pad" style="--pad-color:#ffffff" data-color="#ffffff" aria-label="White"></button>
+                        <button class="pad" style="--pad-color:#ff3b3b" data-color="#ff3b3b" aria-label="Red"></button>
+                        <button class="pad" style="--pad-color:#ff873c" data-color="#ff873c" aria-label="Orange"></button>
+                        <button class="pad" style="--pad-color:#ffea3c" data-color="#ffea3c" aria-label="Yellow"></button>
+                        <button class="pad" style="--pad-color:#00e060" data-color="#00e060" aria-label="Green"></button>
+                        <button class="pad" style="--pad-color:#3cf2ff" data-color="#3cf2ff" aria-label="Cyan"></button>
+                        <button class="pad" style="--pad-color:#3c78ff" data-color="#3c78ff" aria-label="Blue"></button>
+                        <button class="pad" style="--pad-color:#ff3cf3" data-color="#ff3cf3" aria-label="Magenta"></button>
+                    </div>
+                    <div class="deck-controls">
+                        <button class="icon-btn reset-btn" id="reset-style" title="Delete pattern" aria-label="Delete pattern">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M6 6l1 14h10l1-14" />
+                                <path d="M10 10v8" />
+                                <path d="M14 10v8" />
+                            </svg>
+                        </button>
+                        <div class="deck-status status-ready" id="style-status">Ready</div>
+                    </div>
+                </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
     <script src="../script.js"></script>
+    <script src="http://127.0.0.1:35729/livereload.js?snipver=1"></script>
+    <div id="status-message" class="visually-hidden">Draw your music!</div>
 </body>
 </html>

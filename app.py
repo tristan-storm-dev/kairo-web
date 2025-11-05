@@ -7,6 +7,9 @@ from google.cloud import vision
 from PIL import Image
 import io
 import colorsys
+import wave
+import struct
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -291,6 +294,43 @@ def generate_audio_from_prompt(prompt_text: str):
     
     return base64_audio
 
+def generate_audio_fallback(prompt_text: str) -> str:
+    """
+    Offline fallback: synthesize a simple WAV tone based on the prompt text.
+    Returns base64-encoded WAV bytes.
+    """
+    try:
+        sample_rate = 22050
+        duration = 20.0  
+        n_samples = int(sample_rate * duration)
+
+        
+        h = abs(hash(prompt_text))
+        base_freq = 220 + (h % 660)  
+        mod_freq = 2 + (h % 7)       
+
+        
+        frames = []
+        for i in range(n_samples):
+            t = i / sample_rate
+            amp = 0.5 * (0.6 + 0.4 * math.sin(2 * math.pi * mod_freq * t))
+            sample = amp * math.sin(2 * math.pi * base_freq * t)
+            
+            frames.append(struct.pack('<h', int(max(-1.0, min(1.0, sample)) * 32767)))
+
+        
+        buf = io.BytesIO()
+        with wave.open(buf, 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(sample_rate)
+            w.writeframes(b''.join(frames))
+        audio_bytes = buf.getvalue()
+        return base64.b64encode(audio_bytes).decode('ascii')
+    except Exception as e:
+        print(f"Fallback audio generation failed: {e}")
+        return None
+
 @app.route('/generate-music', methods=['POST'])
 def handle_generate_music():
     try:
@@ -299,7 +339,12 @@ def handle_generate_music():
             return jsonify({"error": "No prompt provided"}), 400
         
         prompt = data.get('prompt')
-        base64_audio = generate_audio_from_prompt(prompt)
+        base64_audio = None
+        try:
+            base64_audio = generate_audio_from_prompt(prompt)
+        except Exception as e:
+            print(f"Primary generation failed, using fallback. Error: {e}")
+            base64_audio = generate_audio_fallback(prompt)
         
         if not base64_audio:
             return jsonify({"error": "Failed to generate audio"}), 500

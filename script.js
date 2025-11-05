@@ -49,9 +49,101 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const path = window.location.pathname;
     const isHouse = path.endsWith('/pages/house.html');
+    const isTechno = path.endsWith('/pages/techno.html');
+    const isAmbient = path.endsWith('/pages/ambient.html');
+    const isHipHop = path.endsWith('/pages/hiphop.html');
+    const isDnB = path.endsWith('/pages/drum-and-bass.html');
+    const isLab = isHouse || isTechno || isAmbient || isHipHop || isDnB;
     
     
-    const selectedGenre = "House";
+    const selectedGenre = (
+        isHouse ? "House" :
+        (isTechno ? "Techno" :
+        (isAmbient ? "Ambient" :
+        (isHipHop ? "Hip Hop" :
+        (isDnB ? "Drum & Bass" : "House"))))
+    );
+    
+    const genreTokens = {
+        'Techno': 'techno',
+        'House': 'house',
+        'Hip Hop': 'hiphop',
+        'Ambient': 'ambient',
+        'Drum & Bass': 'dnb'
+    };
+
+    
+    const genreVocab = {
+        'Techno': {
+            vibe: ['dark','hypnotic','industrial','warehouse','minimal','driving'],
+            style: ['acid','dub','melodic','raw','peak','deep']
+        },
+        'House': {
+            vibe: ['funky','soulful','uplifting','groovy','classic','deep'],
+            style: ['garage','jackin','disco','progressive','minimal','chicago']
+        },
+        'Hip Hop': {
+            vibe: ['boombap','trap','jazzy','gritty','lofi','modern'],
+            style: ['eastcoast','westcoast','drill','golden','underground','chopped']
+        },
+        'Ambient': {
+            vibe: ['ethereal','soothing','drone','cinematic','lush','meditative'],
+            style: ['textural','minimal','space','calm','organic','granular']
+        },
+        'Drum & Bass': {
+            vibe: ['liquid','dark','neuro','atmospheric','roller','deep'],
+            style: ['jungle','techstep','jumpup','minimal','classic','modern']
+        }
+    };
+
+    function normalizeKeyword(raw, allowed) {
+        const fallback = allowed && allowed.length ? allowed[0] : '';
+        if (!raw) return fallback;
+        const t = raw.toString().toLowerCase().replace(/[^a-z0-9]/g, ' ')
+            .split(/\s+/).filter(Boolean);
+        
+        for (const w of t) {
+            if (allowed.includes(w)) return w;
+        }
+        
+        let best = fallback;
+        let score = 0;
+        for (const a of allowed) {
+            for (const w of t) {
+                if (w.startsWith(a) || a.startsWith(w) || w.includes(a) || a.includes(w)) {
+                    const s = Math.min(w.length, a.length);
+                    if (s > score) { score = s; best = a; }
+                }
+            }
+        }
+        return best;
+    }
+
+    
+    if (isLab) {
+        const frame = document.querySelector('.frame-media .board-frame') || document.querySelector('.frame-media');
+        const board = document.querySelector('.frame-media .dj-board');
+        if (frame && board) {
+            const getPx = (v) => {
+                if (!v) return 0;
+                const n = parseFloat(v.toString());
+                return isNaN(n) ? 0 : n;
+            };
+            const computeScale = () => {
+                const styles = getComputedStyle(board);
+                const baseW = getPx(styles.getPropertyValue('--board-w')) || board.offsetWidth;
+                const baseH = getPx(styles.getPropertyValue('--board-h')) || board.offsetHeight;
+                const availW = frame.clientWidth;
+                const availH = frame.clientHeight;
+                const s = Math.min(availW / baseW, availH / baseH);
+                board.style.setProperty('--board-scale', s);
+            };
+            computeScale();
+            const ro = new ResizeObserver(() => computeScale());
+            ro.observe(frame);
+            window.addEventListener('resize', computeScale);
+        }
+    }
     
     
     let selectedSubGenre = null; 
@@ -212,16 +304,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const data = await response.json();
             const prompt = data.promptResult;
+            const vocab = genreVocab[selectedGenre] || { vibe: [], style: [] };
 
             
             if (featureType === 'style') {
-                selectedSubGenre = prompt;
-                displayStyle.textContent = prompt;
-                if (previewElement) previewElement.textContent = prompt;
+                const normalized = normalizeKeyword(prompt, vocab.style);
+                selectedSubGenre = normalized;
+                displayStyle.textContent = normalized;
+                if (previewElement) previewElement.textContent = normalized;
             } else if (featureType === 'vibe') {
-                selectedVibe = prompt;
-                displayVibe.textContent = prompt;
-                if (previewElement) previewElement.textContent = prompt;
+                const normalized = normalizeKeyword(prompt, vocab.vibe);
+                selectedVibe = normalized;
+                displayVibe.textContent = normalized;
+                if (previewElement) previewElement.textContent = normalized;
             }
             if (previewElement) previewElement.classList.add('selected');
             statusElement.textContent = prompt;
@@ -274,7 +369,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         
-        const promptText = `${selectedVibe} ${selectedSubGenre} ${selectedGenre} ${selectedLayer}`;
+        const genreToken = (genreTokens[selectedGenre] || 'house');
+        const vocab = genreVocab[selectedGenre] || { vibe: [], style: [] };
+        const vibeToken = normalizeKeyword(selectedVibe, vocab.vibe);
+        const styleToken = normalizeKeyword(selectedSubGenre, vocab.style);
+        const layerToken = (selectedLayer || 'Slow').toString().toLowerCase();
+        const promptText = `${genreToken} ${vibeToken} ${styleToken} ${layerToken}`;
 
         generateButton.disabled = true;
         generateButton.classList.add('spinning');
@@ -334,8 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 generateStatus.textContent = 'Playing generated music!';
             }
             if (trackText) {
-                const label = `${selectedVibe} ${selectedSubGenre} ${selectedGenre} ${selectedLayer}`;
-                trackText.textContent = `Playing: ${label}`;
+                trackText.textContent = `Playing: ${promptText}`;
                 trackText.classList.add('playing');
                 trackText.classList.remove('error');
             }
@@ -378,8 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             
             lastGeneratedAudioSrc = audioSrc;
-            const label = `${selectedVibe || ''} ${selectedSubGenre || ''} ${selectedGenre || ''} ${selectedLayer || ''}`.trim();
-            lastGeneratedFileName = (label || 'Kairo House Track')
+            lastGeneratedFileName = (promptText || 'kairo_track')
                 .replace(/[^a-z0-9_\- ]/gi, '')
                 .replace(/\s+/g, '_') + '.wav';
 
@@ -422,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
     
-    if (isHouse) {
+    if (isLab) {
         
         if (genreLabTitle) genreLabTitle.textContent = `${selectedGenre} Lab`;
         if (previewGenre) previewGenre.textContent = selectedGenre;
@@ -711,7 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             const a = document.createElement('a');
             a.href = lastGeneratedAudioSrc;
-            a.download = lastGeneratedFileName || 'Kairo_House_Track.wav';
+            a.download = lastGeneratedFileName || `Kairo_${selectedGenre}_Track.wav`;
             document.body.appendChild(a);
             a.click();
             a.remove();
