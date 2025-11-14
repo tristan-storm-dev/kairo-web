@@ -1,5 +1,0 @@
-google-cloud-aiplatform
-flask
-flask-cors
-python-dotenv
-Pillow
