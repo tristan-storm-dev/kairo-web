@@ -291,34 +291,76 @@ def generate_audio_from_prompt(prompt_text: str):
         raise ValueError("API response did not contain 'bytesBase64Encoded' field.")
 
     base64_audio = prediction_map['bytesBase64Encoded']
-    
+
+    # Validate WAV header to avoid passing corrupt/non‑WAV bytes to the client
+    try:
+        audio_bytes = base64.b64decode(base64_audio)
+        # Basic RIFF/WAVE check: 'RIFF' at 0..3 and 'WAVE' at 8..11
+        if not (len(audio_bytes) > 12 and audio_bytes[0:4] == b'RIFF' and audio_bytes[8:12] == b'WAVE'):
+            raise ValueError('Vertex AI returned bytes that are not valid WAV')
+    except Exception as e:
+        raise ValueError(f'Invalid audio data from Vertex AI: {e}')
+
     return base64_audio
 
 def generate_audio_fallback(prompt_text: str) -> str:
     """
-    Offline fallback: synthesize a simple WAV tone based on the prompt text.
-    Returns base64-encoded WAV bytes.
+    Offline fallback: synthesize a pleasant triad chord with a soft envelope.
+    Returns base64-encoded 16-bit PCM WAV bytes.
     """
     try:
-        sample_rate = 22050
-        duration = 20.0  
+        sample_rate = 44100
+        duration = 12.0
         n_samples = int(sample_rate * duration)
 
-        
+        # Derive base frequency from prompt hash but constrain to musical range
         h = abs(hash(prompt_text))
-        base_freq = 220 + (h % 660)  
-        mod_freq = 2 + (h % 7)       
+        base_freq = 180 + (h % 180)  # 180–360 Hz roughly A3–F#4
 
-        
+        # Choose chord quality based on simple prompt heuristics
+        p = prompt_text.lower()
+        is_minor = any(k in p for k in ['dark', 'gritty', 'industrial', 'neuro'])
+        # Major third vs minor third
+        third_ratio = 6/5 if is_minor else 5/4
+        fifth_ratio = 3/2
+
+        f1 = base_freq
+        f2 = base_freq * third_ratio
+        f3 = base_freq * fifth_ratio
+
+        # Simple ADSR envelope (seconds)
+        attack = 0.02
+        decay = 0.30
+        sustain = 0.7
+        release = 0.6
+        sustain_start = int(attack * sample_rate)
+        decay_end = sustain_start + int(decay * sample_rate)
+        release_start = n_samples - int(release * sample_rate)
+
         frames = []
         for i in range(n_samples):
             t = i / sample_rate
-            amp = 0.5 * (0.6 + 0.4 * math.sin(2 * math.pi * mod_freq * t))
-            sample = amp * math.sin(2 * math.pi * base_freq * t)
-            
+            # Envelope curve
+            if i < sustain_start:
+                env = i / max(1, sustain_start)  # attack
+            elif i < decay_end:
+                env = 1.0 - (1.0 - sustain) * ((i - sustain_start) / max(1, (decay_end - sustain_start)))
+            elif i < release_start:
+                env = sustain
+            else:
+                env = max(0.0, sustain * (1.0 - (i - release_start) / max(1, (n_samples - release_start))))
+
+            # Gentle amplitude and slight detune for richness
+            detune = 0.995 + (0.01 * ((h % 7) / 7.0))
+            s = (
+                math.sin(2 * math.pi * f1 * t) +
+                math.sin(2 * math.pi * f2 * t * detune) +
+                math.sin(2 * math.pi * f3 * t)
+            ) / 3.0
+
+            sample = 0.28 * env * s
             frames.append(struct.pack('<h', int(max(-1.0, min(1.0, sample)) * 32767)))
 
-        
         buf = io.BytesIO()
         with wave.open(buf, 'wb') as w:
             w.setnchannels(1)
