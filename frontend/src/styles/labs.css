@@ -250,7 +250,7 @@ body.transitioning .lab-doors-screen { pointer-events: none; }
 .lab-stage { display: none; width: 100%; margin-top: 1.75rem; }
 .frame-media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .frame-media .frame-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.media-overlay { position: relative; z-index: 1; }
+.media-overlay { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; }
 .lab-stage.show { display: block; }
 
 .lab-select-stage {
@@ -354,7 +354,7 @@ body.transitioning .lab-doors-screen { pointer-events: none; }
   background: var(--k-color-white);
 }
 
-.lab-card .card-info { padding: 12px 0; display: grid; grid-template-rows: auto 1fr auto; row-gap: 8px; text-align: left; overflow: visible; }
+.lab-card .card-info { padding: 12px 0; display: grid; grid-template-rows: auto 1fr auto; row-gap: 8px; text-align: center; overflow: visible; }
 
 
 .lab-stage .lab-card-title { font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-size: 1rem; color: var(--k-color-black-teal); margin: 0; }
@@ -363,9 +363,9 @@ body.transitioning .lab-doors-screen { pointer-events: none; }
 
 
 .lab-title-row {
-  display: grid;
-  grid-template-columns: 20px 1fr;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   column-gap: 10px;
 }
 
